@@ -138,6 +138,8 @@ app.post('/account/delete', passportConfig.isAuthenticated, userController.postD
 app.get('/account/unlink/:provider', passportConfig.isAuthenticated, userController.getOauthUnlink);
 
 app.get('/drive/images', passportConfig.isAuthenticated, imageController.getImages);
+app.post('/drive/images', passportConfig.isAuthenticated, imageController.postImages);
+
 
 /**
  * API examples routes.

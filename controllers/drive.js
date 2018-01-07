@@ -6,28 +6,132 @@
 const Image = require('../models/Image.js');
 const User = require('../models/User.js');
 const google = require('googleapis');
+//const gapi = require('https://apis.google.com/js/api.js'); //?onload=onApiLoad
 var OAuth2 = google.auth.OAuth2;
 var googleAuth = require('google-auth-library');
 
 
 exports.getImages = (req, res) => {
+    res.render('drive/images', { images: null });
+    //Image.find((err, docs) => {
+
+        // var pick = require('google-picker')({
+        //     clientId: '569072057508-jprgcdgfk6lcs2g4m0ieqftsrniuin5d.apps.googleusercontent.com',
+        //     apiKey: 'AIzaSyBu_4PKulFGlZtAB10E-ekucVFzm2KzSxk'
+        // });
+        //
+        // pick({views: ['PhotosView()']}, function(err, files) {
+        //     if(err) throw err;
+        //     log(files);
+        // });
+
+
+    //});
+};
+
+
+exports.postImages  = (req, res) => {
+    const util = require('util');
+    console.log(util.inspect(req.body.pickerresults));
+
+
     User.findOne({ 'email': 'jobrot94@gmail.com', 'tokens.kind': 'google' }, 'tokens.accessToken', (err, docs) => {
         //console.log(docs.tokens[0].accessToken);
         //listFiles(docs.tokens[0].accessToken);
         //download('DSC_4107.JPG',docs.tokens[0])
         //authorize(JSON.parse('{"web":{"client_id":"569072057508-jprgcdgfk6lcs2g4m0ieqftsrniuin5d.apps.googleusercontent.com","project_id":"travelpresenter","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://accounts.google.com/o/oauth2/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_secret":"mDsLEg9RhTqHUhY1GGMo1iMw","redirect_uris":["http://localhost:8080/auth/google/callback"]}}'), download, docs.tokens[0].accessToken);
 
-    });
-    Image.find((err, docs) => {
-        res.render('drive/images', { images: docs });
+        var auth = new googleAuth();
+        var oauth2Client = new auth.OAuth2('569072057508-jprgcdgfk6lcs2g4m0ieqftsrniuin5d.apps.googleusercontent.com', 'mDsLEg9RhTqHUhY1GGMo1iMw', 'http://localhost:8080/auth/google/callback');
+        oauth2Client.credentials.access_token = docs.tokens[0].accessToken; //TODO change structure
+
+        download(oauth2Client);
+
+
     });
 };
 
 
+//--------------------------
+
+
+/**
+//The Browser API key obtained from the Google API Console.
+var developerKey = 'AIzaSyBu_4PKulFGlZtAB10E-ekucVFzm2KzSxk';
+
+console.log("in images js");
+
+// The Client ID obtained from the Google API Console. Replace with your own Client ID.
+var clientId = '569072057508-jprgcdgfk6lcs2g4m0ieqftsrniuin5d.apps.googleusercontent.com'
+
+// Scope to use to access user's photos.
+var scope = ['https://www.googleapis.com/auth/drive.photos.readonly']; //https://www.googleapis.com/auth/photos      https://www.googleapis.com/auth/drive.photos.readonly	View the photos, videos and albums in your Google Photos
+
+var pickerApiLoaded = false;
+var oauthToken;
+
+// Use the API Loader script to load google.picker and gapi.auth.
+function onApiLoad() {
+    console.log("onApiLoad called");
+    gapi.load('auth', {'callback': onAuthApiLoad});
+    gapi.load('picker', {'callback': onPickerApiLoad});
+}
+
+function onAuthApiLoad() {
+    console.log("onAuthApiLoad called");
+    window.gapi.auth.authorize(
+        {
+            'client_id': clientId,
+            'scope': scope,
+            'immediate': false
+        },
+        handleAuthResult);
+}
+
+function onPickerApiLoad() {
+    console.log("onPickerApiLoad called");
+    pickerApiLoaded = true;
+    createPicker();
+}
+
+function handleAuthResult(authResult) {
+    console.log("handleAuthResult called");
+    console.log(authResult);
+    if (authResult && !authResult.error) {
+        oauthToken = authResult.access_token;
+        createPicker();
+    }
+}
+
+// Create and render a Picker object for picking user Photos.
+function createPicker() {
+    console.log("createPicker called");
+    if (pickerApiLoaded && oauthToken) {  //google.picker.ViewId.PHOTOS  --> all photos in their albums        DOCS_IMAGES --> all photos in gdrive
+        var picker = new google.picker.PickerBuilder().addView(google.picker.ViewId.DOCS_IMAGES).setOAuthToken(oauthToken).setDeveloperKey(developerKey).setCallback(pickerCallback).build();
+        picker.setVisible(true);
+    }
+}
+
+// A simple callback implementation.
+function pickerCallback(data) {
+    var url = 'nothing';
+    if (data[google.picker.Response.ACTION] == google.picker.Action.PICKED) {
+        var doc = data[google.picker.Response.DOCUMENTS][0];
+        url = doc[google.picker.Document.URL];
+    }
+    console.log('You picked: ' + url);
+
+}
+**/
+
+//-------------------
 
 //req.user.tokens.find(token => token.kind === 'google');
 
+
+
 function download (auth) {
+    console.log(auth);
     var drive = google.drive('v3');
     drive.files.get({
         auth: auth,
@@ -40,7 +144,7 @@ function download (auth) {
 
         console.log('Downloading %s...', metadata.name);
 
-        auth.setCredentials(tokens);
+        //auth.setCredentials(tokens);
 
         var dest = fs.createWriteStream(metadata.name);
 
@@ -69,7 +173,7 @@ function download (auth) {
 
 
 
-
+/**
 function listFiles(auth) {
     var service = google.drive('v3');
     service.files.list({
@@ -94,6 +198,7 @@ function listFiles(auth) {
         }
     });
 }
+ **/
 
 function authorize(credentials, callback, token) {
     var clientSecret = credentials.client_secret;
@@ -114,71 +219,8 @@ function authorize(credentials, callback, token) {
     callback(oauth2Client);
 }
 
-// var pick = require('google-picker')({
-//         clientId: '569072057508-jprgcdgfk6lcs2g4m0ieqftsrniuin5d.apps.googleusercontent.com',
-//     //apiKey: 'mDsLEg9RhTqHUhY1GGMo1iMw'
-// });
-//
-// pick({views: ['DocsView()']}, function(err, files) {
-//     if(err) throw err;
-//         log(files);
-// });
 
 
-
-var pickerApiLoaded = false;
-var oauthToken;
-
-// Use the API Loader script to load google.picker and gapi.auth.
-function onApiLoad() {
-    gapi.load('auth', {'callback': onAuthApiLoad});
-    gapi.load('picker', {'callback': onPickerApiLoad});
-}
-
-function onAuthApiLoad() {
-    window.gapi.auth.authorize(
-        {
-            'client_id': '569072057508-jprgcdgfk6lcs2g4m0ieqftsrniuin5d.apps.googleusercontent.com',
-            'scope': ['https://www.googleapis.com/auth/photos'],
-            'immediate': false
-        },
-        handleAuthResult);
-}
-
-function onPickerApiLoad() {
-    pickerApiLoaded = true;
-    createPicker();
-}
-
-function handleAuthResult(authResult) {
-    if (authResult && !authResult.error) {
-        oauthToken = authResult.access_token;
-        createPicker();
-    }
-}
-
-// Create and render a Picker object for picking user Photos.
-function createPicker() {
-    if (pickerApiLoaded && oauthToken) {
-        var picker = new google.picker.PickerBuilder().
-        addView(google.picker.ViewId.PHOTOS).
-        setOAuthToken(oauthToken).
-        setDeveloperKey(developerKey).
-        setCallback(pickerCallback).
-        build();
-        picker.setVisible(true);
-    }
-}
-
-// A simple callback implementation.
-function pickerCallback(data) {
-    var url = 'nothing';
-    if (data[google.picker.Response.ACTION] == google.picker.Action.PICKED) {
-        var doc = data[google.picker.Response.DOCUMENTS][0];
-        url = doc[google.picker.Document.URL];
-    }
-    log('You picked: ' + url);
-}
 
 
 
