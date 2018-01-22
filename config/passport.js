@@ -1,6 +1,7 @@
 const passport = require('passport');
 const request = require('request');
 const LocalStrategy = require('passport-local').Strategy;
+const refresh = require('passport-oauth2-refresh');
 const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 const OpenIDStrategy = require('passport-openid').Strategy;
 const OAuthStrategy = require('passport-oauth').OAuthStrategy;
@@ -71,7 +72,7 @@ passport.use(new GoogleStrategy({
         User.findById(req.user.id, (err, user) => {
           if (err) { return done(err); }
           user.google = profile.id;
-          user.tokens.push({ kind: 'google', accessToken });
+          user.tokens.push({ kind: 'google', accessToken, refreshToken });
           user.profile.name = user.profile.name || profile.displayName;
           user.profile.gender = user.profile.gender || profile._json.gender;
           user.profile.picture = user.profile.picture || profile._json.image.url;
@@ -97,7 +98,7 @@ passport.use(new GoogleStrategy({
           const user = new User();
           user.email = profile.emails[0].value;
           user.google = profile.id;
-          user.tokens.push({ kind: 'google', accessToken });
+          user.tokens.push({ kind: 'google', accessToken ,refreshToken});
           user.profile.name = profile.displayName;
           user.profile.gender = profile._json.gender;
           user.profile.picture = profile._json.image.url;
@@ -109,6 +110,30 @@ passport.use(new GoogleStrategy({
     });
   }
 }));
+
+/*
+  Refresh the access token using the refresh token
+ */
+exports.refreshAccessToken = (id) =>{
+    User.findById(id, (err, user) => {
+        if (err) { return done(err); }
+
+        refresh.requestNewAccessToken('google', user.tokens.filter(token => token.kind == 'google')[0].refreshToken, function(err, accessToken, refreshToken) {
+
+
+
+            // TODO? assumes that just google is present
+            if (err) {console.log(err); return;}
+            user.tokens= [{ kind: 'google', accessToken, refreshToken }];
+            user.save((err) => {
+                console.log(err);
+            });
+        });
+
+    });
+
+};
+
 
 
 

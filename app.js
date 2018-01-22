@@ -152,7 +152,7 @@ app.get('/api/google-maps', apiController.getGoogleMaps);
 /**
  * OAuth authentication routes. (Sign in)
  */
-app.get('/auth/google', passport.authenticate('google', { scope: 'profile email https://www.googleapis.com/auth/drive.photos.readonly' }));
+app.get('/auth/google', passport.authenticate('google', { accessType: 'offline', scope: 'profile email https://www.googleapis.com/auth/drive' })); //https://www.googleapis.com/auth/drive.photos.readonly
 app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), (req, res) => {
   res.redirect(req.session.returnTo || '/');
 });

@@ -10,9 +10,15 @@ const google = require('googleapis');
 var OAuth2 = google.auth.OAuth2;
 var googleAuth = require('google-auth-library');
 
+const passportConfig = require('../config/passport');
+
 
 exports.getImages = (req, res) => {
-    res.render('drive/images', { images: null });
+
+
+
+
+    res.render('drive/images', { images: null });  //TODO accesstoken mitsenden
     //Image.find((err, docs) => {
 
         // var pick = require('google-picker')({
@@ -44,8 +50,12 @@ exports.postImages  = (req, res) => {
         var auth = new googleAuth();
         var oauth2Client = new auth.OAuth2('569072057508-jprgcdgfk6lcs2g4m0ieqftsrniuin5d.apps.googleusercontent.com', 'mDsLEg9RhTqHUhY1GGMo1iMw', 'http://localhost:8080/auth/google/callback');
         oauth2Client.credentials.access_token = docs.tokens[0].accessToken; //TODO change structure
+        oauth2Client.credentials.refresh_token = docs.tokens[0].refresh_token;
+        console.log("id: ");
+        console.log(docs.id);
+        passportConfig.refreshAccessToken(docs.id);
 
-        download(oauth2Client);
+        download(oauth2Client, req.body.pickerresults);
 
 
     });
@@ -130,44 +140,52 @@ function pickerCallback(data) {
 
 
 
-function download (auth) {
-    console.log(auth);
+function download (auth, pickerresults) {
+    //console.log(auth);
     var drive = google.drive('v3');
-    drive.files.get({
-        auth: auth,
-        fileId: '20140810_134211.jpg'
-    }, function (err, metadata) {
-        if (err) {
-            console.error(err);
-            return process.exit();
-        }
+    //TODO evtl make this parallel  (https://developers.google.com/drive/v3/web/batch)
 
-        console.log('Downloading %s...', metadata.name);
 
-        //auth.setCredentials(tokens);
 
-        var dest = fs.createWriteStream(metadata.name);
-
+    pickerresults.split(',').forEach(entry => {
+        console.log("entry " + entry);
         drive.files.get({
-            fileId: fileId,
-            alt: 'media'
-        })
-            .on('error', function (err) {
-                console.log('Error downloading file', err);
-                process.exit();
-            })
-            .pipe(dest);
+            auth: auth,
+            fileId: entry
+        }, function (err, metadata) {
+            if (err) {
+                console.error(err);
+                return process.exit();
+            }
 
-        dest
-            .on('finish', function () {
-                console.log('Downloaded %s!', metadata.name);
-                process.exit();
+            console.log('Downloading %s...', metadata.name);
+
+            //auth.setCredentials(tokens);
+
+            var dest = fs.createWriteStream(metadata.name);
+
+            drive.files.get({
+                fileId: fileId,
+                alt: 'media'
             })
-            .on('error', function (err) {
-                console.log('Error writing file', err);
-                process.exit();
-            });
-    });
+                .on('error', function (err) {
+                    console.log('Error downloading file', err);
+                    process.exit();
+                })
+                .pipe(dest);
+
+            dest
+                .on('finish', function () {
+                    console.log('Downloaded %s!', metadata.name);
+                    process.exit();
+                })
+                .on('error', function (err) {
+                    console.log('Error writing file', err);
+                    process.exit();
+                });
+        });
+    })
+
 }
 
 

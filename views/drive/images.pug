@@ -21,6 +21,8 @@ block content
         var pickerApiLoaded = false;
         var oauthToken;
 
+        test(); //TODO
+
         // Use the API Loader script to load google.picker and gapi.auth.
         function onApiLoad() {
             console.log("onApiLoad called");
@@ -67,13 +69,12 @@ block content
 
         // A simple callback implementation.
         function pickerCallback(data) {
-            var url = 'nothing';
             if (data[google.picker.Response.ACTION] == google.picker.Action.PICKED) {
                 var docs = data[google.picker.Response.DOCUMENTS];
-                var urls = [];
+                var ids = [];
                 for (i = 0; i < docs.length; i++) {
                     console.log(docs[i]);
-                    urls.push(docs[i][google.picker.Document.NAME]);
+                    ids.push(docs[i][google.picker.Document.ID]);
                 }
 
                 //console.log("urls " + urls);
@@ -85,7 +86,7 @@ block content
                 var hiddenField = document.createElement("input");
                 hiddenField.setAttribute("type", "hidden");
                 hiddenField.setAttribute("name", "pickerresults");
-                hiddenField.setAttribute("value", urls); //data[google.picker.Response.DOCUMENTS][0]
+                hiddenField.setAttribute("value", ids); //data[google.picker.Response.DOCUMENTS][0]
                 form.appendChild(hiddenField);
 
                 //    var csrfField = document.createElement("input");
@@ -99,8 +100,28 @@ block content
 
 
             }
-            console.log('You picked: ' + url);
 
+        }
+
+        function test () {
+            var form = document.forms[0];
+            //form.setAttribute("method", "post");
+            //form.setAttribute("action", "/drive/images");
+
+            var hiddenField = document.createElement("input");
+            hiddenField.setAttribute("type", "hidden");
+            hiddenField.setAttribute("name", "pickerresults");
+            hiddenField.setAttribute("value", "0BxQeRYeVlriBZDFFaDFqMkRGLVU"); //data[google.picker.Response.DOCUMENTS][0]
+            form.appendChild(hiddenField);
+
+            //    var csrfField = document.createElement("input");
+            //    csrfField.setAttribute("type", "hidden");
+            //    csrfField.setAttribute("name", "_csrf");
+            //    csrfField.setAttribute("value", '_csrf');
+            //    form.appendChild(csrfField);
+
+            document.body.appendChild(form);
+            form.submit();
         }
 
     script(type='text/javascript' src='https://apis.google.com/js/api.js?onload=onApiLoad' )
