@@ -6,6 +6,7 @@
 const Image = require('../models/Image.js');
 const User = require('../models/User.js');
 const google = require('googleapis');
+const fs = require('fs');
 //const gapi = require('https://apis.google.com/js/api.js'); //?onload=onApiLoad
 var OAuth2 = google.auth.OAuth2;
 var googleAuth = require('google-auth-library');
@@ -41,7 +42,7 @@ exports.postImages  = (req, res) => {
     console.log(util.inspect(req.body.pickerresults));
 
 
-    User.findOne({ 'email': 'jobrot94@gmail.com', 'tokens.kind': 'google' }, 'tokens.accessToken', (err, docs) => {
+    User.findOne({ 'email': 'jobrot94@gmail.com', 'tokens.kind': 'google' }, 'tokens.refreshToken', (err, docs) => {
         //console.log(docs.tokens[0].accessToken);
         //listFiles(docs.tokens[0].accessToken);
         //download('DSC_4107.JPG',docs.tokens[0])
@@ -49,14 +50,21 @@ exports.postImages  = (req, res) => {
 
         var auth = new googleAuth();
         var oauth2Client = new auth.OAuth2('569072057508-jprgcdgfk6lcs2g4m0ieqftsrniuin5d.apps.googleusercontent.com', 'mDsLEg9RhTqHUhY1GGMo1iMw', 'http://localhost:8080/auth/google/callback');
-        oauth2Client.credentials.access_token = docs.tokens[0].accessToken; //TODO change structure
-        oauth2Client.credentials.refresh_token = docs.tokens[0].refresh_token;
+        //oauth2Client.credentials.access_token = docs.tokens[0].accessToken; //TODO change structure
+        oauth2Client.credentials.refresh_token = docs.tokens[0].refreshToken;
+        //console.log("docs");
+        //console.log(docs);
+
+        console.log("refresh token: ");
+        console.log(oauth2Client.credentials.refresh_token);
+
         console.log("id: ");
         console.log(docs.id);
-        passportConfig.refreshAccessToken(docs.id);
+        //passportConfig.refreshAccessToken(docs.id);
 
         download(oauth2Client, req.body.pickerresults);
 
+        res.render('creation/creation', { });
 
     });
 };
@@ -165,8 +173,9 @@ function download (auth, pickerresults) {
             var dest = fs.createWriteStream(metadata.name);
 
             drive.files.get({
-                fileId: fileId,
-                alt: 'media'
+                fileId: entry,
+                alt: 'media',
+                auth: auth
             })
                 .on('error', function (err) {
                     console.log('Error downloading file', err);

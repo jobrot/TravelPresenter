@@ -35,6 +35,7 @@ const userController = require('./controllers/user');
 const apiController = require('./controllers/api');
 const contactController = require('./controllers/contact');
 const imageController = require('./controllers/drive');
+const creationController = require('./controllers/creation');
 
 /**
  * API keys and Passport configuration.
@@ -140,6 +141,7 @@ app.get('/account/unlink/:provider', passportConfig.isAuthenticated, userControl
 app.get('/drive/images', passportConfig.isAuthenticated, imageController.getImages);
 app.post('/drive/images', passportConfig.isAuthenticated, imageController.postImages);
 
+app.get('/creation', passportConfig.isAuthenticated, creationController.getCreation);
 
 /**
  * API examples routes.

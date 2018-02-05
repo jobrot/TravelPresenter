@@ -1,6 +1,7 @@
 {
   "name": "travelpresenter",
   "dependencies": {
+    "@google/maps": "^0.4.5",
     "bcrypt-nodejs": "^0.0.3",
     "bluebird": "^3.5.0",
     "body-parser": "^1.17.2",
