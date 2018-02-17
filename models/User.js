@@ -10,7 +10,8 @@ const userSchema = new mongoose.Schema({
 
 
   google: String,
-  tokens: Array,
+  accessToken: String,
+  refreshToken: String,
 
   profile: {
     name: String,

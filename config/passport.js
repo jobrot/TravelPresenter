@@ -56,78 +56,87 @@ passport.use(new LocalStrategy({ usernameField: 'email' }, (email, password, don
 /**
  * Sign in with Google.
  */
-passport.use(new GoogleStrategy({
-  clientID: process.env.GOOGLE_ID,
-  clientSecret: process.env.GOOGLE_SECRET,
-  callbackURL: '/auth/google/callback',
-  passReqToCallback: true
+
+var googleStrategy = new GoogleStrategy({
+    clientID: process.env.GOOGLE_ID,
+    clientSecret: process.env.GOOGLE_SECRET,
+    callbackURL: '/auth/google/callback',
+    passReqToCallback: true,
+    accessType: 'offline'
 }, (req, accessToken, refreshToken, profile, done) => {
-  if (req.user) {
-    User.findOne({ google: profile.id }, (err, existingUser) => {
-      if (err) { return done(err); }
-      if (existingUser) {
-        req.flash('errors', { msg: 'There is already a Google account that belongs to you. Sign in with that account or delete it, then link it with your current account.' });
-        done(err);
-      } else {
-        User.findById(req.user.id, (err, user) => {
-          if (err) { return done(err); }
-          user.google = profile.id;
-          user.tokens.push({ kind: 'google', accessToken, refreshToken });
-          user.profile.name = user.profile.name || profile.displayName;
-          user.profile.gender = user.profile.gender || profile._json.gender;
-          user.profile.picture = user.profile.picture || profile._json.image.url;
-          user.save((err) => {
-            req.flash('info', { msg: 'Google account has been linked.' });
-            done(err, user);
-          });
+    if (req.user) {
+        User.findOne({ google: profile.id }, (err, existingUser) => {
+            if (err) { return done(err); }
+            if (existingUser) {
+                req.flash('errors', { msg: 'There is already a Google account that belongs to you. Sign in with that account or delete it, then link it with your current account.' });
+                done(err);
+            } else {
+                User.findById(req.user.id, (err, user) => {
+                    if (err) { return done(err); }
+                    user.google = profile.id;
+                    user.accessToken=accessToken;
+                    user.refreshToken=refreshToken;
+                    user.profile.name = user.profile.name || profile.displayName;
+                    user.profile.gender = user.profile.gender || profile._json.gender;
+                    user.profile.picture = user.profile.picture || profile._json.image.url;
+                    user.save((err) => {
+                        req.flash('info', { msg: 'Google account has been linked.' });
+                        done(err, user);
+                    });
+                });
+            }
         });
-      }
-    });
-  } else {
-    User.findOne({ google: profile.id }, (err, existingUser) => {
-      if (err) { return done(err); }
-      if (existingUser) {
-        return done(null, existingUser);
-      }
-      User.findOne({ email: profile.emails[0].value }, (err, existingEmailUser) => {
-        if (err) { return done(err); }
-        if (existingEmailUser) {
-          req.flash('errors', { msg: 'There is already an account using this email address. Sign in to that account and link it with Google manually from Account Settings.' });
-          done(err);
-        } else {
-          const user = new User();
-          user.email = profile.emails[0].value;
-          user.google = profile.id;
-          user.tokens.push({ kind: 'google', accessToken ,refreshToken});
-          user.profile.name = profile.displayName;
-          user.profile.gender = profile._json.gender;
-          user.profile.picture = profile._json.image.url;
-          user.save((err) => {
-            done(err, user);
-          });
-        }
-      });
-    });
-  }
-}));
+    } else {
+        User.findOne({ google: profile.id }, (err, existingUser) => {
+            if (err) { return done(err); }
+            if (existingUser) {
+                return done(null, existingUser);
+            }
+            User.findOne({ email: profile.emails[0].value }, (err, existingEmailUser) => {
+                if (err) { return done(err); }
+                if (existingEmailUser) {
+                    req.flash('errors', { msg: 'There is already an account using this email address. Sign in to that account and link it with Google manually from Account Settings.' });
+                    done(err);
+                } else {
+                    const user = new User();
+                    user.email = profile.emails[0].value;
+                    user.google = profile.id;
+                    user.accessToken=accessToken;
+                    user.refreshToken=refreshToken;
+                    user.profile.name = profile.displayName;
+                    user.profile.gender = profile._json.gender;
+                    user.profile.picture = profile._json.image.url;
+                    user.save((err) => {
+                        done(err, user);
+                    });
+                }
+            });
+        });
+    }
+});
+
+
+passport.use(googleStrategy);
+refresh.use(googleStrategy);
 
 /*
   Refresh the access token using the refresh token
  */
-exports.refreshAccessToken = (id) =>{
+exports.refreshAccessToken = (id, callback) =>{
     User.findById(id, (err, user) => {
         if (err) { return done(err); }
 
-        refresh.requestNewAccessToken('google', user.tokens.filter(token => token.kind == 'google')[0].refreshToken, function(err, accessToken, refreshToken) {
+        refresh.requestNewAccessToken('google', user.refreshToken, function(err, accessToken, refreshToken) {
 
 
-
-            // TODO? assumes that just google is present
-            if (err) {console.log(err); return;}
-            user.tokens= [{ kind: 'google', accessToken, refreshToken }];
+            console.log("refreshedToken " + accessToken);
+            if (err) {console.log(err);}
+            user.accessToken=accessToken;
+            //user.refreshToken=refreshToken;
             user.save((err) => {
                 console.log(err);
             });
+            return callback(accessToken);
         });
 
     });
@@ -152,7 +161,7 @@ exports.isAuthenticated = (req, res, next) => {
  */
 exports.isAuthorized = (req, res, next) => {
   const provider = req.path.split('/').slice(-1)[0];
-  const token = req.user.tokens.find(token => token.kind === provider);
+  const token = req.user.refreshToken;
   if (token) {
     next();
   } else {

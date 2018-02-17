@@ -203,6 +203,8 @@ exports.getOauthUnlink = (req, res, next) => {
   User.findById(req.user.id, (err, user) => {
     if (err) { return next(err); }
     user[provider] = undefined;
+    user.accessToken = undefined;
+    user.refe
     user.tokens = user.tokens.filter(token => token.kind !== provider);
     user.save((err) => {
       if (err) { return next(err); }

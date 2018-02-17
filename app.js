@@ -141,7 +141,7 @@ app.get('/account/unlink/:provider', passportConfig.isAuthenticated, userControl
 app.get('/drive/images', passportConfig.isAuthenticated, imageController.getImages);
 app.post('/drive/images', passportConfig.isAuthenticated, imageController.postImages);
 
-app.get('/creation', passportConfig.isAuthenticated, creationController.getCreation);
+app.get('/creation/:id', passportConfig.isAuthenticated, creationController.getCreation);
 
 /**
  * API examples routes.
