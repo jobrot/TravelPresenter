@@ -3,9 +3,9 @@ const Album = require('../models/Album.js');
 
 /**
  * GET /
- * Creation page.
+ * Play page.
  */
-exports.getCreation = (req, res) => {
+exports.getPlay = (req, res) => {
   //query all locations and give them to the rendering function
   console.log(req.params);
   Album.findById( req.params.id, function (err, album) {
@@ -16,7 +16,7 @@ exports.getCreation = (req, res) => {
     console.log(JSON.stringify(album));
 
 
-    res.render('creation/creation', {
+    res.render('play/play', {
         album: album
     });
   });

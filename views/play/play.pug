@@ -1,0 +1,54 @@
+extends ../layout
+
+block content
+  div(id='map' style='height: 80vh;')
+  script(type='text/javascript').
+    var markers = [];
+    var travelpath;
+    function initMap() {
+      console.log("initmap");
+
+      var map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 3,
+        center: locations[0]
+      });
+
+      // Create an array of alphabetical characters used to label the markers.
+      var labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      console.log("2");
+      markers = locations.map(function(location, i) {
+        return new google.maps.Marker({
+          _id: location._id,
+          position: location,
+          label: labels[i % labels.length]
+        });
+      });
+      console.log("3");
+      // Add a marker clusterer to manage the markers.
+      var markerCluster = new MarkerClusterer(map, markers, {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m', gridSize: '10'});
+      createPathfromLocations(locations).setMap(map);
+
+
+    }
+
+    function createPathfromLocations(locs){
+        travelpath = new google.maps.Polyline({
+            path: locs,
+            geodesic: true,
+            strokeColor: '#FF0000',
+            strokeOpacity: 1.0,
+            strokeWeight: 2
+        });
+        return travelpath;
+
+
+    }
+
+    var locations = !{JSON.stringify(album.images)};
+
+
+
+
+  script(type='text/javascript' src='https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js' )
+  //TODO Client API Key has to be Restricted after development is finished
+  script(type='text/javascript' src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBu_4PKulFGlZtAB10E-ekucVFzm2KzSxk&callback=initMap")

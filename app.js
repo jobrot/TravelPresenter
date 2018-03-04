@@ -36,6 +36,7 @@ const apiController = require('./controllers/api');
 const contactController = require('./controllers/contact');
 const imageController = require('./controllers/drive');
 const creationController = require('./controllers/creation');
+const playController = require('./controllers/play');
 
 /**
  * API keys and Passport configuration.
@@ -142,6 +143,8 @@ app.get('/drive/images', passportConfig.isAuthenticated, imageController.getImag
 app.post('/drive/images', passportConfig.isAuthenticated, imageController.postImages);
 
 app.get('/creation/:id', passportConfig.isAuthenticated, creationController.getCreation);
+
+app.get('/play/:id', passportConfig.isAuthenticated, playController.getPlay);
 
 /**
  * API examples routes.

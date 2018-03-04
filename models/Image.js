@@ -6,7 +6,7 @@ const imageSchema = new mongoose.Schema({
     id: String,
     lat: Number,
     lng: Number,
-    thumbnail: Buffer,
+    thumbnail: String,
     //thumbnailMime: String,
     createdTime: Date
 });

@@ -1,16 +1,47 @@
 extends ../layout
 
 block content
+  //link(rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css")
+  //link(rel="stylesheet" href="/resources/demos/style.css")
+
   h3 Visited Locations
   h2 #{album.title}
-  div(id='map' style='height: 80vh;')
+  div(class="col-sm-9")
+    div(class="row")
+      div(id='map' style='height: 80vh;')
+    div(class="row")
+      div(class="col-sm-8")
+      div(class="col-sm-1")
+        a(href='/play/'+album._id)
+          img(alt='Play Button', width='100%' src='/play_button.png' )
+  div(class="col-sm-3")
+    //button(onclick='test()')
+    //class="list-group"
+    ol(id="sortable" )
+      each image in album.images
+        li(class="list-group-item" id=image._id)
+          #{image.filename}
+          img(src="data:image/jpeg;base64, "+image.thumbnail.toString('base64'))
+
+      //li(class="list-group-item") First item
+      //li(class="list-group-item") Second item
+      //li(class="list-group-item") Third item
+
+
   script(type='text/javascript').
+      $(function () {
+          $("#sortable").sortable();
+          $("#sortable").disableSelection();
+      });
+  script(type='text/javascript').
+    var markers = [];
+    var travelpath;
     function initMap() {
       console.log("initmap");
 
       var map = new google.maps.Map(document.getElementById('map'), {
         zoom: 3,
-        center: {lat: -28.024, lng: 140.887}
+        center: locations[0]
       });
 
       // Create an array of alphabetical characters used to label the markers.
@@ -20,18 +51,70 @@ block content
       // Note: The code uses the JavaScript Array.prototype.map() method to
       // create an array of markers based on a given "locations" array.
       // The map() method here has nothing to do with the Google Maps API.
-      var markers = locations.map(function(location, i) {
+      markers = locations.map(function(location, i) {
         return new google.maps.Marker({
+          _id: location._id,
           position: location,
           label: labels[i % labels.length]
         });
       });
 
       // Add a marker clusterer to manage the markers.
-      var markerCluster = new MarkerClusterer(map, markers, {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'});
+      var markerCluster = new MarkerClusterer(map, markers, {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m', gridSize: '10'});
+      createPathfromLocations(locations).setMap(map);
+
+
+    }
+
+    function createPathfromLocations(locs){
+        travelpath = new google.maps.Polyline({
+            path: locs,
+            geodesic: true,
+            strokeColor: '#FF0000',
+            strokeOpacity: 1.0,
+            strokeWeight: 2
+        });
+        return travelpath;
+        //var polyline = new google.maps.Polyline(locations, '#ff0000', 5, 0.7);
+
+        // Add the polyline to the map using map.addOverlay()
+        //map.addOverlay(polyline);
+        //polyline.setMap(map);
+
     }
 
     var locations = !{JSON.stringify(album.images)};
+
+  script(type='text/javascript').
+    var idsInOrder = [];
+    function sortArrayWithComparatorArray(a, b) {
+        return idsInOrder.indexOf(a._id) - idsInOrder.indexOf(b._id);
+    }
+    var test = function () {
+        //var idsInOrder = $("#sortable").sortable("refreshPositions").children();
+
+        idsInOrder = $("#sortable").sortable("toArray");
+
+        //This part just changes the markers around, but they actually dont even have to be moved
+        //console.log("markers before:");
+        //console.log(markers);
+        //markers.sort(sortArrayWithComparatorArray);
+        //console.log("markers after:");
+        //console.log(markers);
+
+        console.log("locations: ");
+        console.log(locations);
+        locations.sort(sortArrayWithComparatorArray);
+        console.log(locations);
+        var map = travelpath.getMap();
+        travelpath.setMap(null);
+        createPathfromLocations(locations);
+        travelpath.setMap(map);
+    }
+
+    $("#sortable").sortable({
+        stop: test
+    });
 
 
   script(type='text/javascript' src='https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js' )

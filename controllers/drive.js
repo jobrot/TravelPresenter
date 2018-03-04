@@ -12,6 +12,7 @@ var OAuth2 = google.auth.OAuth2;
 var googleAuth = require('google-auth-library');
 var request = require('request').defaults({ encoding: null });
 var requestpromise = require('request-promise');
+var base64Img = require('base64-img');
 
 
 const passportConfig = require('../config/passport');
@@ -164,16 +165,23 @@ function downloadMetadata (auth, pickerresults, res) {
                     image.createdTime = metadata.createdTime;
                     // console.log("image: ")
                     // console.log(image);
+
+
                     if (metadata.thumbnailLink) {
-                        requestpromise.get(metadata.thumbnailLink).then( function (body) {
-                            data = new Buffer(body).toString('base64');
-                            image.thumbnail = data;
-                            // console.log("image before pushing");
-                            // console.log(image);
+                        requestpromise.get({url: metadata.thumbnailLink, encoding: "base64"}).then( function (body) {
+                            console.log("bodylog");
+                            console.log(body);
+                            //body = body.replace(/^data:image\/jpg;base64,/,"");
+                            //data = new Buffer(body, 'binary').toString('base64');
+                            //data = body.toString('base64');
+
+                            image.thumbnail = body;
+                            console.log("image before pushing");
+                            console.log(image);
                             album.images.push(image);
                             resolve();
                         }).catch(function (err) {
-                            console.err(err);
+                            console.error(err);
                             reject(err);
                         });
                     }else{
@@ -194,29 +202,3 @@ function downloadMetadata (auth, pickerresults, res) {
     //TODO raise alert window of all those at once
 
 }
-
-
-// function authorize(credentials, callback, token) {
-//     var clientSecret = credentials.client_secret;
-//     var clientId = credentials.client_id;
-//     var redirectUrl = 'http://localhost:8080/auth/google/callback';
-//     var auth = new googleAuth();
-//     var oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
-//
-//     oauth2Client.credentials ={
-//         access_token: token,
-//         // Optional, provide an expiry_date (milliseconds since the Unix Epoch)
-//         // expiry_date: (new Date()).getTime() + (1000 * 60 * 60 * 24 * 7)
-//     };
-//
-//     callback(oauth2Client);
-// }
-
-
-
-
-
-
-
-
-
