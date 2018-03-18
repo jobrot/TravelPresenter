@@ -15,7 +15,7 @@ block content
         // The Client ID obtained from the Google API Console. Replace with your own Client ID.
         var clientId = '569072057508-jprgcdgfk6lcs2g4m0ieqftsrniuin5d.apps.googleusercontent.com'
 
-        // Scope to use to access user's photos.
+        // Scope to use to access user's photos. TODO wenn ich das ändere, auch im play.pug ändern bzw. als umgebungsvariablen setzen
         var scope = ['https://www.googleapis.com/auth/drive.readonly']; //https://www.googleapis.com/auth/photos      https://www.googleapis.com/auth/drive.photos.readonly	View the photos, videos and albums in your Google Photos
 
         var pickerApiLoaded = false;
@@ -72,30 +72,20 @@ block content
         function pickerCallback(data) {
             if (data[google.picker.Response.ACTION] == google.picker.Action.PICKED) {
                 var docs = data[google.picker.Response.DOCUMENTS];
-                console.log(docs);
                 var ids = [];
                 for (i = 0; i < docs.length; i++) {
                     console.log(docs[i]);
                     ids.push(docs[i][google.picker.Document.ID]);
                 }
 
-                //console.log("urls " + urls);
 
-                var form = document.forms[0];
-                //form.setAttribute("method", "post");
-                //form.setAttribute("action", "/drive/images");
+                var form = document.forms[0]; //TODO evtl mit jquery ajax call ersetzen wie in creation.pug
 
                 var hiddenField = document.createElement("input");
                 hiddenField.setAttribute("type", "hidden");
                 hiddenField.setAttribute("name", "pickerresults");
                 hiddenField.setAttribute("value", ids); //data[google.picker.Response.DOCUMENTS][0]
                 form.appendChild(hiddenField);
-
-                //    var csrfField = document.createElement("input");
-                //    csrfField.setAttribute("type", "hidden");
-                //    csrfField.setAttribute("name", "_csrf");
-                //    csrfField.setAttribute("value", '_csrf');
-                //    form.appendChild(csrfField);
                 
                 document.body.appendChild(form);
                 form.submit();

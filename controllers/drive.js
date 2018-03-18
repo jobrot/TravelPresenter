@@ -20,7 +20,7 @@ const passportConfig = require('../config/passport');
 
 exports.getImages = (req, res) => {
     console.log(req.user);
-    var accessToken = passportConfig.refreshAccessToken(req.user._id, accessToken =>  {
+    passportConfig.refreshAccessToken(req.user._id, accessToken =>  {
         console.log("accesstoken in drive "+accessToken);
         res.render('drive/images', { accessToken: accessToken });
     });
@@ -37,7 +37,7 @@ exports.postImages  = (req, res) => {
     console.log(util.inspect(req.body.pickerresults));
 
 
-    User.findOne({ 'email': 'jobrot94@gmail.com' }, 'refreshToken', (err, docs) => {
+    User.findOne({ 'email': 'jobrot94@gmail.com' }, 'refreshToken', (err, docs) => { //TODO use current user
         //console.log(docs.tokens[0].accessToken);
         //listFiles(docs.tokens[0].accessToken);
         //download('DSC_4107.JPG',docs.tokens[0])
@@ -45,13 +45,12 @@ exports.postImages  = (req, res) => {
 
         var auth = new googleAuth();
         var oauth2Client = new auth.OAuth2('569072057508-jprgcdgfk6lcs2g4m0ieqftsrniuin5d.apps.googleusercontent.com', 'mDsLEg9RhTqHUhY1GGMo1iMw', 'http://localhost:8080/auth/google/callback');
-        //oauth2Client.credentials.access_token = docs.tokens[0].accessToken; //TODO change structure
         oauth2Client.credentials.refresh_token = docs.refreshToken;
-        //console.log("docs");
-        //console.log(docs);
+        console.log("docs");
+        console.log(docs);
 
-        console.log("refresh token: ");
-        console.log(oauth2Client.credentials.refresh_token);
+        //console.log("refresh token: ");
+        //console.log(oauth2Client.credentials.refresh_token);
 
         console.log("id: ");
         console.log(docs.id);
@@ -140,7 +139,7 @@ function downloadMetadata (auth, pickerresults, res) {
     album.images = new Array();
     var promises = new Array();
 
-    pickerresults.split(',').forEach(entry => {
+    pickerresults.split(',').forEach((entry, index) => {
         promises.push(new Promise(function(resolve, reject){
             drive.files.get({
                 auth: auth,
@@ -152,19 +151,20 @@ function downloadMetadata (auth, pickerresults, res) {
                     console.error(err);
                     reject(err);
                 }
-                if(!metadata.imageMediaMetadata.location){
+                if(!metadata.imageMediaMetadata || !metadata.imageMediaMetadata.location){
                     console.error("The image "+metadata.name+" does not posess geographic location and will be excluded!");
                     reject("The image "+metadata.name+" does not posess geographic location and will be excluded!");
                 }
                 else {
                     var image = new Image();
-                    image.id = metadata.id;
+                    image.id = entry;
+                    image.position = index;
                     image.filename = metadata.name;
                     image.lat = metadata.imageMediaMetadata.location.latitude;
                     image.lng = metadata.imageMediaMetadata.location.longitude;
                     image.createdTime = metadata.createdTime;
-                    // console.log("image: ")
-                    // console.log(image);
+                    console.log("metadata: ")
+                    console.log(JSON.stringify(metadata));
 
 
                     if (metadata.thumbnailLink) {
@@ -191,8 +191,6 @@ function downloadMetadata (auth, pickerresults, res) {
                 }
         })}));
     })
-    // console.log("Promises");
-    // console.log(promises);
     Promise.all(promises).then(function(data) {
         album.save();
         res.redirect('/creation/'+album._id);

@@ -68,3 +68,50 @@ textarea {
 .fa {
   margin-right: 6px;
 }
+
+
+
+// Custom additions
+// -------------------------
+
+//Modals for play
+/* The Modal (background) */
+.playmodal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  padding-top: 100px; /* Location of the box */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(255,255,255); /* Fallback color */
+  background-color: rgba(255,255,255,0.2); /* White w/ opacity */
+}
+
+/* Modal Content (Image) */
+.playmodal-content {
+  margin: auto;
+  display: block;
+  width: 80%;
+  max-width: 700px;
+}
+
+/* Add Animation - Zoom in the Modal */
+.playmodal-content {
+  animation-name: playzoom;
+  animation-duration: 1s;
+}
+
+@keyframes playzoom {
+  from {transform:scale(0)}
+  to {transform:scale(1)}
+}
+
+/* 100% Image Width on Smaller Screens */
+@media only screen and (max-width: 700px){
+  .playmodal-content {
+    width: 100%;
+  }
+}

@@ -1,10 +1,10 @@
 extends ../layout
 
 block content
-  //link(rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css")
-  //link(rel="stylesheet" href="/resources/demos/style.css")
 
   h3 Visited Locations
+  //form.form-horizontal(method='POST', action='/creation')
+      input(type='hidden', name='_csrf', value=_csrf)
   h2 #{album.title}
   div(class="col-sm-9")
     div(class="row")
@@ -90,7 +90,7 @@ block content
     function sortArrayWithComparatorArray(a, b) {
         return idsInOrder.indexOf(a._id) - idsInOrder.indexOf(b._id);
     }
-    var test = function () {
+    var updateMap = function () {
         //var idsInOrder = $("#sortable").sortable("refreshPositions").children();
 
         idsInOrder = $("#sortable").sortable("toArray");
@@ -110,12 +110,34 @@ block content
         travelpath.setMap(null);
         createPathfromLocations(locations);
         travelpath.setMap(map);
+        var album = !{JSON.stringify(album)}
+        console.log("stringified album " + JSON.stringify(album));
+        album.images = locations;
+        console.log("stringified album after reset locations" + JSON.stringify(album));
+        updatePositionsPersistCreation(album);
+        //TODO persistcreation muss alles durchgehen und ordnen, sowie das ganze album haben (jetzt ist hier nur locations)
     }
 
     $("#sortable").sortable({
-        stop: test
+        stop: updateMap
     });
 
+    function updatePositionsPersistCreation(album) {
+
+        album.images.forEach((image, index) =>{
+           image.position = index;
+        });
+
+        //$.post( "/creation", album);
+        $.ajax({
+            type: "POST",
+            url: "/creation",
+            data: {
+                album: album,
+                _csrf: "#{_csrf}"
+            }
+        });
+    }
 
   script(type='text/javascript' src='https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js' )
   //TODO Client API Key has to be Restricted after development is finished

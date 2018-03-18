@@ -3,6 +3,7 @@ const Image = require('./Image.js');
 
 
 const albumSchema = new mongoose.Schema({
+   // _id: String,
     ownerMail: String,
     title: String,
     images: [Image.schema]

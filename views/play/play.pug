@@ -2,20 +2,27 @@ extends ../layout
 
 block content
   div(id='map' style='height: 80vh;')
+  div(id='myModal' class='playmodal' style='display: block')
+      img(class='playmodal-content' id='img0' style='display: none')
+      img(class='playmodal-content' id='img1' style='display: none')
+      img(class='playmodal-content' id='img2' style='display: none')
+      img(class='playmodal-content' id='img3' style='display: none')
+      img(class='playmodal-content' id='img4' style='display: none')
   script(type='text/javascript').
+    var oauthToken = '#{accessToken}';
+
     var markers = [];
     var travelpath;
     function initMap() {
       console.log("initmap");
-
+      console.log("accessToken: " + oauthToken);
       var map = new google.maps.Map(document.getElementById('map'), {
-        zoom: 3,
+        zoom: 8,
         center: locations[0]
       });
 
       // Create an array of alphabetical characters used to label the markers.
       var labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      console.log("2");
       markers = locations.map(function(location, i) {
         return new google.maps.Marker({
           _id: location._id,
@@ -23,11 +30,12 @@ block content
           label: labels[i % labels.length]
         });
       });
-      console.log("3");
       // Add a marker clusterer to manage the markers.
-      var markerCluster = new MarkerClusterer(map, markers, {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m', gridSize: '10'});
+      //var markerCluster = new MarkerClusterer(map, markers, {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m', gridSize: '10'});
       createPathfromLocations(locations).setMap(map);
 
+      preloadImages(locations);
+      panMapToAllLocations(map, locations, 0);
 
     }
 
@@ -40,15 +48,87 @@ block content
             strokeWeight: 2
         });
         return travelpath;
-
-
     }
 
     var locations = !{JSON.stringify(album.images)};
 
 
+    var STEPS = 50;
+    var STEPLENGTH= 20;
+    var PRELOAD_IMG_COUNT = 5;
+
+    function panMapToAllLocations(map, locs, i){
+        console.log("panto");
+        var modal = document.getElementById('myModal');
+        var modalImg = document.getElementById("img"+i%PRELOAD_IMG_COUNT);
+        //console.log("modal " + JSON.stringify(modal) + " modalimg: " + JSON.stringify(modalImg));
+        modalImg.src = "https://drive.google.com/uc?export=view&id="+locs[0].id;
+
+        sleep(STEPLENGTH*STEPS).then(()=>{
+            console.log(locs[0]);
+            console.log("lat starting: "+ locs[0].lat + "  lng starting: " + locs[0].lng);
+
+            modal.style.display = "block";
+            modalImg.style.display = "block";
+
+            sleep(3000).then(()=>{
+                modal.style.display = "none";
+                modalImg.style.display = "none";
+                if(locs[PRELOAD_IMG_COUNT-1]){
+                    modalImg.src = "https://drive.google.com/uc?export=view&id="+locs[PRELOAD_IMG_COUNT-1].id; //TODO evtl bei parametern herumspielen
+                }
+                slowPanTo(map, locs[1].lat, locs[1].lng, STEPS);
+                locs.shift();
+
+
+                //console.log("mymodal: ");
+                //console.log(JSON.stringify($("#myModal")));
+                //console.log("modalimg: ");
+                //console.log(JSON.stringify($("#img01")));
+                //$("#myModal").css("display","block");
+                //$("#img01").src = "20140810_121150.jpg";
+
+                if(locs.length != 1){
+                   panMapToAllLocations(map, locs, i+1);
+                }
+            });
+        });
+    }
+
+    function preloadImages(locs){
+        for(i=0; i<PRELOAD_IMG_COUNT; i++){
+            var img = document.getElementById("img"+i);
+            if(img && locs[i]){
+                img.src = "https://drive.google.com/uc?export=view&id="+locs[i].id;
+            }
+            else console.error("No image found at Index "+i+", expected "+ PRELOAD_IMG_COUNT);
+        }
+    }
+
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+
+    function slowPanTo(map, goalLat, goalLong, steps) {
+            var curLat = map.getCenter().lat();
+            var curLng = map.getCenter().lng();
+            //console.log("curlat: "+curLat+ "  curlng: " +curLng);
+            var newLat = curLat + ((goalLat - curLat) / steps);
+            var newLng = curLng + ((goalLong - curLng) / steps);
+            map.panTo({lat: newLat, lng: newLng});
+            if(steps==1){
+                return;
+            }
+
+            sleep(STEPLENGTH).then(()=>{
+               //console.log("stepping in: "+steps);
+               slowPanTo(map, goalLat, goalLong, steps-1);
+            });
+    }
 
 
   script(type='text/javascript' src='https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js' )
   //TODO Client API Key has to be Restricted after development is finished
   script(type='text/javascript' src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBu_4PKulFGlZtAB10E-ekucVFzm2KzSxk&callback=initMap")
+  script(type='text/javascript' src='https://apis.google.com/js/client.js?onload=onApiLoad')
