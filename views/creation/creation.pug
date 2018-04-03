@@ -2,26 +2,36 @@ extends ../layout
 
 block content
 
-  h3 Visited Locations
-  //form.form-horizontal(method='POST', action='/creation')
-      input(type='hidden', name='_csrf', value=_csrf)
-  h2 #{album.title}
-  div(class="col-sm-9")
-    div(class="row")
+  if warning
+    div(id="warning")
+        .alert.alert-warning.fade.in
+            div= warning
+  h3
+    span(class="label label-default editableTitle" for="titleTextBox")
+        if album.title
+            span album.title
+        else
+            span Click to Add Text
+  input(value="" type="text" style="padding-down:10px;" id="titleTextBox" name="titleTextBox" class="blur" hidden)
+
+  //h2 #{album.title}
+  div(class="col-sm-8")
+    div(class="row" style="padding-up:10px;")
       div(id='map' style='height: 80vh;')
     div(class="row")
       div(class="col-sm-8")
-      div(class="col-sm-1")
+      div(class="col-sm-1 pull-right")
         a(href='/play/'+album._id)
-          img(alt='Play Button', width='100%' src='/play_button.png' )
-  div(class="col-sm-3")
+          span(class="glyphicon glyphicon-play")
+          //img(alt='Play Button', width='100%' src='/play_button.png' )
+  div(class="col-sm-4 pre-scrollable")
     //button(onclick='test()')
     //class="list-group"
     ol(id="sortable" )
       each image in album.images
         li(class="list-group-item" id=image._id)
           #{image.filename}
-          img(src="data:image/jpeg;base64, "+image.thumbnail.toString('base64'))
+          img(src="data:image/jpeg;base64, "+image.thumbnail.toString('base64') style="max-width:100%;max-height:100%;")
 
       //li(class="list-group-item") First item
       //li(class="list-group-item") Second item
@@ -41,17 +51,13 @@ block content
 
       var map = new google.maps.Map(document.getElementById('map'), {
         zoom: 3,
-        center: locations[0]
+        center: album.images[0]
       });
 
       // Create an array of alphabetical characters used to label the markers.
       var labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-      // Add some markers to the map.
-      // Note: The code uses the JavaScript Array.prototype.map() method to
-      // create an array of markers based on a given "locations" array.
-      // The map() method here has nothing to do with the Google Maps API.
-      markers = locations.map(function(location, i) {
+      markers = album.images.map(function(location, i) {
         return new google.maps.Marker({
           _id: location._id,
           position: location,
@@ -61,7 +67,7 @@ block content
 
       // Add a marker clusterer to manage the markers.
       var markerCluster = new MarkerClusterer(map, markers, {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m', gridSize: '10'});
-      createPathfromLocations(locations).setMap(map);
+      createPathfromLocations(album.images).setMap(map);
 
 
     }
@@ -83,7 +89,7 @@ block content
 
     }
 
-    var locations = !{JSON.stringify(album.images)};
+    var album = !{JSON.stringify(album)};
 
   script(type='text/javascript').
     var idsInOrder = [];
@@ -103,17 +109,13 @@ block content
         //console.log(markers);
 
         console.log("locations: ");
-        console.log(locations);
-        locations.sort(sortArrayWithComparatorArray);
-        console.log(locations);
+        console.log(album.images);
+        album.images.sort(sortArrayWithComparatorArray);
+        console.log(album.images);
         var map = travelpath.getMap();
         travelpath.setMap(null);
-        createPathfromLocations(locations);
+        createPathfromLocations(album.images);
         travelpath.setMap(map);
-        var album = !{JSON.stringify(album)}
-        console.log("stringified album " + JSON.stringify(album));
-        album.images = locations;
-        console.log("stringified album after reset locations" + JSON.stringify(album));
         updatePositionsPersistCreation(album);
         //TODO persistcreation muss alles durchgehen und ordnen, sowie das ganze album haben (jetzt ist hier nur locations)
     }
@@ -127,8 +129,11 @@ block content
         album.images.forEach((image, index) =>{
            image.position = index;
         });
+        persistCreation(album);
 
-        //$.post( "/creation", album);
+    }
+
+    function persistCreation(album){
         $.ajax({
             type: "POST",
             url: "/creation",
@@ -139,6 +144,32 @@ block content
         });
     }
 
+    //Code for editable label
+    $('.editableTitle').click(function () {
+        "use strict";
+        $(this).hide();
+        $('#' + $(this).attr('for'))
+            .val($(this).text())
+            .toggleClass("form-control")
+            .show()
+            .focus();
+    });
+
+    $('.blur').blur(function () {
+        "use strict";
+        $(this)
+            .hide()
+            .toggleClass("form-control");
+        var myid = (this).id;
+        $('span[for=' + myid + ']')
+            .text($(this).val())
+            .show();
+        album.title = $(this).val();
+        persistCreation(album);
+    });
+
+    //Removing Warnings
+    $("#warning").ready().delay(5000).fadeOut();
   script(type='text/javascript' src='https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js' )
   //TODO Client API Key has to be Restricted after development is finished
   script(type='text/javascript' src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBu_4PKulFGlZtAB10E-ekucVFzm2KzSxk&callback=initMap")

@@ -1,0 +1,21 @@
+extends ../layout
+
+block content
+  //form.form-horizontal(method='POST', action='/creation')
+      input(type='hidden', name='_csrf', value=_csrf)
+  h3 Your Creations
+  div
+      each album in albums
+        .row
+          a(href='/creation/'+album._id, style='color: #1565c0')
+              .panel.panel-default(style='background-color: #fff')
+                  .panel-body
+                      img(src="data:image/jpeg;base64, "+album.images[0].thumbnail.toString('base64'), height=40)
+                      |  #{album.title}
+  .row
+        a(href='/drive/images', style='color: #1565c0')
+            button(class='btn btn-default btn-lg pull-right')
+                span(class='glyphicon glyphicon-plus')
+
+
+

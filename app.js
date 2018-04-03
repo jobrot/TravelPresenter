@@ -142,8 +142,10 @@ app.get('/account/unlink/:provider', passportConfig.isAuthenticated, userControl
 app.get('/drive/images', passportConfig.isAuthenticated, imageController.getImages);
 app.post('/drive/images', passportConfig.isAuthenticated, imageController.postImages);
 
+app.get('/creations', passportConfig.isAuthenticated, creationController.getCreations);
 app.get('/creation/:id', passportConfig.isAuthenticated, creationController.getCreation);
-app.post('/creation', passportConfig.isAuthenticated, creationController.postCreation);
+app.post('/creation', passportConfig.isAuthenticated, creationController.getCreation);
+app.post('/saveCreation', passportConfig.isAuthenticated, creationController.saveCreation);
 
 app.get('/play/:id', passportConfig.isAuthenticated, playController.getPlay);
 

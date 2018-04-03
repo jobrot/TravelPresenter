@@ -34,35 +34,28 @@ exports.getImages = (req, res) => {
 
 exports.postImages  = (req, res) => {
     const util = require('util');
-    console.log(util.inspect(req.body.pickerresults));
+
+    //req.body.album.ownerMail = req.user.email; //Valid because this is verified/added by passport.js middleware
+
+    //User.findOne({ 'email': req.user.email }, 'refreshToken', (err, docs) => { //not needed any more -> user is authenticated via passport
+
+    var auth = new googleAuth();
+    var oauth2Client = new auth.OAuth2('569072057508-jprgcdgfk6lcs2g4m0ieqftsrniuin5d.apps.googleusercontent.com', 'mDsLEg9RhTqHUhY1GGMo1iMw', 'http://localhost:8080/auth/google/callback');
+    oauth2Client.credentials.refresh_token = req.user.refreshToken;
 
 
-    User.findOne({ 'email': 'jobrot94@gmail.com' }, 'refreshToken', (err, docs) => { //TODO use current user
-        //console.log(docs.tokens[0].accessToken);
-        //listFiles(docs.tokens[0].accessToken);
-        //download('DSC_4107.JPG',docs.tokens[0])
-        //authorize(JSON.parse('{"web":{"client_id":"569072057508-jprgcdgfk6lcs2g4m0ieqftsrniuin5d.apps.googleusercontent.com","project_id":"travelpresenter","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://accounts.google.com/o/oauth2/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_secret":"mDsLEg9RhTqHUhY1GGMo1iMw","redirect_uris":["http://localhost:8080/auth/google/callback"]}}'), download, docs.tokens[0].accessToken);
+    //console.log("refresh token: ");
+    //console.log(oauth2Client.credentials.refresh_token);
 
-        var auth = new googleAuth();
-        var oauth2Client = new auth.OAuth2('569072057508-jprgcdgfk6lcs2g4m0ieqftsrniuin5d.apps.googleusercontent.com', 'mDsLEg9RhTqHUhY1GGMo1iMw', 'http://localhost:8080/auth/google/callback');
-        oauth2Client.credentials.refresh_token = docs.refreshToken;
-        console.log("docs");
-        console.log(docs);
+    //passportConfig.refreshAccessToken(req.user._id); //TODO may need this
 
-        //console.log("refresh token: ");
-        //console.log(oauth2Client.credentials.refresh_token);
+    //download(oauth2Client, req.body.pickerresults);
 
-        console.log("id: ");
-        console.log(docs.id);
-        //passportConfig.refreshAccessToken(docs.id);
-
-        //download(oauth2Client, req.body.pickerresults);
-
-        downloadMetadata(oauth2Client, req.body.pickerresults,  res);
-        //evtl callback und dann direkt in das render rein
+    downloadMetadataAndCreateAlbum(oauth2Client, req.body.pickerresults, req.user.email,  res);
+    //evtl callback und dann direkt in das render rein
 
 
-    });
+    //});
 };
 
 
@@ -131,13 +124,14 @@ function download (auth, pickerresults) {
 
 
 
-function downloadMetadata (auth, pickerresults, res) {
+function downloadMetadataAndCreateAlbum (auth, pickerresults, ownerMail, res) {
     console.log(auth);
     var drive = google.drive('v3');
 
     var album = new Album();
     album.images = new Array();
     var promises = new Array();
+    var errors = [];
 
     pickerresults.split(',').forEach((entry, index) => {
         promises.push(new Promise(function(resolve, reject){
@@ -153,6 +147,7 @@ function downloadMetadata (auth, pickerresults, res) {
                 }
                 if(!metadata.imageMediaMetadata || !metadata.imageMediaMetadata.location){
                     console.error("The image "+metadata.name+" does not posess geographic location and will be excluded!");
+                    errors.push("The image "+metadata.name+" does not posess geographic location and will be excluded!\n");
                     reject("The image "+metadata.name+" does not posess geographic location and will be excluded!");
                 }
                 else {
@@ -163,21 +158,21 @@ function downloadMetadata (auth, pickerresults, res) {
                     image.lat = metadata.imageMediaMetadata.location.latitude;
                     image.lng = metadata.imageMediaMetadata.location.longitude;
                     image.createdTime = metadata.createdTime;
-                    console.log("metadata: ")
-                    console.log(JSON.stringify(metadata));
+                    //console.log("metadata: ")
+                    //console.log(JSON.stringify(metadata));
 
 
                     if (metadata.thumbnailLink) {
                         requestpromise.get({url: metadata.thumbnailLink, encoding: "base64"}).then( function (body) {
-                            console.log("bodylog");
-                            console.log(body);
+                            //console.log("bodylog");
+                            //console.log(body);
                             //body = body.replace(/^data:image\/jpg;base64,/,"");
                             //data = new Buffer(body, 'binary').toString('base64');
                             //data = body.toString('base64');
 
                             image.thumbnail = body;
-                            console.log("image before pushing");
-                            console.log(image);
+                            //console.log("image before pushing");
+                            //console.log(image);
                             album.images.push(image);
                             resolve();
                         }).catch(function (err) {
@@ -186,17 +181,39 @@ function downloadMetadata (auth, pickerresults, res) {
                         });
                     }else{
                         console.error("The image "+metadata.name+" does not have a thumbnail");
+                        errors.push("The image "+metadata.name+" does not have a thumbnail!\n");
                         reject(err);
                     }
                 }
         })}));
     })
     Promise.all(promises).then(function(data) {
+        album.ownerMail = ownerMail;
         album.save();
-        res.redirect('/creation/'+album._id);
+        //res.redirect('/creation/'+album._id);
         // console.log("metadatas");
         // console.log(JSON.stringify(album));
+
+        // console.log("posting");
+        // $.ajax({
+        //     type: "POST",
+        //     url: "/creation/"+album._id,
+        //     data: {
+        //         errors: errors,
+        //         _csrf: "#{_csrf}"
+        //     }
+        // });
+        if(errors.length == 0){
+            errors = null;
+        }
+
+        console.log("rendering creation")
+        res.render('creation/creation', {
+            album: album,
+            warning: errors
+        });
+
+
     }).catch(err => console.error("An error occured with one of the metadatas: "+err));
-    //TODO raise alert window of all those at once
 
 }

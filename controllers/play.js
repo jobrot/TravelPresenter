@@ -8,7 +8,8 @@ const passportConfig = require('../config/passport');
  */
 exports.getPlay = (req, res) => {
   //query all locations and give them to the rendering function
-  console.log(req.params);
+  console.log("HierParams");
+  console.log(req);
   Album.findById( req.params.id, function (err, album) {
     if(err){
       console.error(err);

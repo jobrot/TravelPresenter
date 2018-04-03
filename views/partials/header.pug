@@ -11,6 +11,8 @@
         | TravelPresenter
     .collapse.navbar-collapse
       ul.nav.navbar-nav
+        li
+          a(href='/creations') All Presentations
         li(class=(title === 'Home') ? 'active' : undefined)
           a(href='/') Home
         li(class=(title === 'API Examples') ? 'active' : undefined)
