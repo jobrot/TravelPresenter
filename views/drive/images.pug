@@ -12,16 +12,14 @@ block content
 
         console.log("in images js");
 
-        // The Client ID obtained from the Google API Console. Replace with your own Client ID.
+        // The Client ID obtained from the Google API Console.
         var clientId = '569072057508-jprgcdgfk6lcs2g4m0ieqftsrniuin5d.apps.googleusercontent.com'
 
         // Scope to use to access user's photos. TODO wenn ich das ändere, auch im play.pug ändern bzw. als umgebungsvariablen setzen
-        var scope = ['https://www.googleapis.com/auth/drive.readonly']; //https://www.googleapis.com/auth/photos      https://www.googleapis.com/auth/drive.photos.readonly	View the photos, videos and albums in your Google Photos
+        var scope = ['https://www.googleapis.com/auth/drive.photos.readonly']; //https://www.googleapis.com/auth/photos  https://www.googleapis.com/auth/drive.readonly    https://www.googleapis.com/auth/drive.photos.readonly	View the photos, videos and albums in your Google Photos
 
         var pickerApiLoaded = false;
-        var oauthToken='#{accessToken}';
-
-        //test(); //TODO
+        var oauthToken ='#{accessToken}';
 
         // Use the API Loader script to load google.picker and gapi.auth.
         function onApiLoad() {
@@ -29,6 +27,8 @@ block content
             //gapi.load('auth', {'callback': onAuthApiLoad});
             gapi.load('picker', {'callback': onPickerApiLoad});
         }
+
+
         /*
         function onAuthApiLoad() {
             console.log("onAuthApiLoad called");
@@ -46,6 +46,8 @@ block content
             pickerApiLoaded = true;
             createPicker();
         }
+
+
         /*
         function handleAuthResult(authResult) {
             console.log("handleAuthResult called");
@@ -79,7 +81,7 @@ block content
                 }
 
 
-                var form = document.forms[0]; //TODO evtl mit jquery ajax call ersetzen wie in creation.pug
+                var form = document.forms[0];
 
                 var hiddenField = document.createElement("input");
                 hiddenField.setAttribute("type", "hidden");
@@ -89,10 +91,7 @@ block content
                 
                 document.body.appendChild(form);
                 form.submit();
-
-
             }
-
         }
 
         function test () {
@@ -116,4 +115,4 @@ block content
             form.submit();
         }
 
-    script(type='text/javascript' src='https://apis.google.com/js/client.js?onload=onApiLoad' ) //https://apis.google.com/js/api.js?onload=onApiLoad
+    script(type='text/javascript' src='https://apis.google.com/js/api.js?onload=onApiLoad')   //'https://apis.google.com/js/client.js?onload=onApiLoad') TEMPORÄÄÄÄR //https://apis.google.com/js/api.js?onload=onApiLoad

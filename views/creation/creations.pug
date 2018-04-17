@@ -1,17 +1,25 @@
 extends ../layout
 
 block content
-  //form.form-horizontal(method='POST', action='/creation')
-      input(type='hidden', name='_csrf', value=_csrf)
   h3 Your Creations
-  div
-      each album in albums
-        .row
-          a(href='/creation/'+album._id, style='color: #1565c0')
-              .panel.panel-default(style='background-color: #fff')
-                  .panel-body
-                      img(src="data:image/jpeg;base64, "+album.images[0].thumbnail.toString('base64'), height=40)
-                      |  #{album.title}
+
+  each album in albums
+    .row
+      .panel.panel-default(style='background-color: #fff; height=100%')
+          .panel-body
+              .col-lg-4
+                img(src="data:image/jpeg;base64, "+album.images[0].thumbnail.toString('base64'), class='img-responsive')
+              .col-lg-4
+                  a(href='/creation/' + album._id, style='line-height:3em; font-size:3em; vcenter')
+                      span(class='glyphicon glyphicon-edit').
+                      |&nbsp; #{album.title}
+
+              .col-lg-4
+                form(action='/creation/delete/' + album._id, method="POST", style="display: inline;")
+                  input(type='hidden', name='_csrf', value=_csrf)
+                  span(style='font-size:8em;')
+                    button(type="submit" value="submit" class="glyphicon glyphicon-remove button pull-right" style="background:none; border:none")
+
   .row
         a(href='/drive/images', style='color: #1565c0')
             button(class='btn btn-default btn-lg pull-right')

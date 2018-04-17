@@ -144,8 +144,9 @@ app.post('/drive/images', passportConfig.isAuthenticated, imageController.postIm
 
 app.get('/creations', passportConfig.isAuthenticated, creationController.getCreations);
 app.get('/creation/:id', passportConfig.isAuthenticated, creationController.getCreation);
-app.post('/creation', passportConfig.isAuthenticated, creationController.getCreation);
-app.post('/saveCreation', passportConfig.isAuthenticated, creationController.saveCreation);
+app.post('/creation', passportConfig.isAuthenticated, creationController.saveCreation);
+app.post('/creation/delete/:id', passportConfig.isAuthenticated, creationController.deleteCreation);
+//app.post('/saveCreation', passportConfig.isAuthenticated, creationController.saveCreation);
 
 app.get('/play/:id', passportConfig.isAuthenticated, playController.getPlay);
 
@@ -160,7 +161,7 @@ app.get('/api/google-maps', apiController.getGoogleMaps);
 /**
  * OAuth authentication routes. (Sign in)
  */
-app.get('/auth/google', passport.authenticate('google', { accessType: 'offline', scope: 'profile email https://www.googleapis.com/auth/drive' })); //https://www.googleapis.com/auth/drive.photos.readonly
+app.get('/auth/google', passport.authenticate('google', { accessType: 'offline', scope: 'profile email https://www.googleapis.com/auth/drive.photos.readonly' })); //https://www.googleapis.com/auth/drive.photos.readonly
 app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), (req, res) => {
   res.redirect(req.session.returnTo || '/');
 });

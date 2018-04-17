@@ -8,6 +8,7 @@ const Album = require('../models/Album.js');
 const User = require('../models/User.js');
 const google = require('googleapis');
 const fs = require('fs');
+var Batchelor = require('batchelor');
 var OAuth2 = google.auth.OAuth2;
 var googleAuth = require('google-auth-library');
 var request = require('request').defaults({ encoding: null });
@@ -39,9 +40,11 @@ exports.postImages  = (req, res) => {
 
     //User.findOne({ 'email': req.user.email }, 'refreshToken', (err, docs) => { //not needed any more -> user is authenticated via passport
 
+    //var auth= 'AIzaSyBu_4PKulFGlZtAB10E-ekucVFzm2KzSxk';
+
     var auth = new googleAuth();
     var oauth2Client = new auth.OAuth2('569072057508-jprgcdgfk6lcs2g4m0ieqftsrniuin5d.apps.googleusercontent.com', 'mDsLEg9RhTqHUhY1GGMo1iMw', 'http://localhost:8080/auth/google/callback');
-    oauth2Client.credentials.refresh_token = req.user.refreshToken;
+    oauth2Client.credentials.refresh_token = req.user.refreshToken; //This would only be needed,
 
 
     //console.log("refresh token: ");
@@ -50,8 +53,8 @@ exports.postImages  = (req, res) => {
     //passportConfig.refreshAccessToken(req.user._id); //TODO may need this
 
     //download(oauth2Client, req.body.pickerresults);
-
-    downloadMetadataAndCreateAlbum(oauth2Client, req.body.pickerresults, req.user.email,  res);
+                                //todo eig. oauth2client
+    downloadMetadataAndCreateAlbum(req.user.accessToken, req.body.pickerresults, req.user.email,  res);
     //evtl callback und dann direkt in das render rein
 
 
@@ -125,6 +128,129 @@ function download (auth, pickerresults) {
 
 
 function downloadMetadataAndCreateAlbum (auth, pickerresults, ownerMail, res) {
+
+    var album = new Album();
+    album.images = new Array();
+    var promises = new Array();
+    promises.push(new Promise(resolve => setTimeout(resolve, 10000)));
+    var errors = [];
+
+    console.log("auth: "+auth)
+    var batch = new Batchelor({
+        'uri':'https://www.googleapis.com/batch',
+        'method':'POST',
+        'auth': {
+            'bearer': [auth]
+        },
+        'headers': {
+            'Content-Type': 'multipart/mixed'
+        }
+    });
+
+
+    pickerresults.split(',').forEach((entry) => {
+        batch.add({
+            'method': 'GET',
+            'path': '/drive/v3/files/'+entry +'/?fields=name,thumbnailLink,imageMediaMetadata,id',
+            'fields': 'imageMediaMetadata'
+        })
+    });
+
+
+    batch.run(function(err, response){
+        console.log(response);
+        if (err){
+            console.log("Error: " + err);
+            errors.push(err);
+        }
+
+        response.parts.forEach( (part, index) => {
+            promises.push(new Promise(function(resolve, reject) {
+                var metadata = part.body;
+                console.log("metadata:");
+                console.log(metadata);
+                //metadata = JSON.parse(metadata);
+                if (part.statusCode != '200') {
+                    console.error("ERROR CODE IN RESPONSE: \n" + metadata);
+                    resolve();
+                }
+                else if (!metadata.imageMediaMetadata || !metadata.imageMediaMetadata.location) {
+                    console.error("The image " + metadata.name + " does not posess geographic location and will be excluded!");
+                    errors.push("The image " + metadata.name + " does not posess geographic location and will be excluded!\n");
+                    resolve();
+                }
+                else {
+                    var image = new Image();
+                    image.id = metadata.id;
+                    image.position = index;
+                    image.filename = metadata.name;
+                    image.lat = metadata.imageMediaMetadata.location.latitude;
+                    image.lng = metadata.imageMediaMetadata.location.longitude;
+                    image.createdTime = metadata.createdTime;
+
+
+                    if (metadata.thumbnailLink) {
+                        requestpromise.get({url: metadata.thumbnailLink, encoding: "base64"}).then( function (body) {
+                            //console.log("bodylog");
+                            //console.log(body);
+                            //body = body.replace(/^data:image\/jpg;base64,/,"");
+                            //data = new Buffer(body, 'binary').toString('base64');
+                            //data = body.toString('base64');
+
+                            image.thumbnail = body;
+                            //console.log("image before pushing");
+                            //console.log(image);
+                            album.images.push(image);
+                            resolve();
+                        }).catch(function (err) {
+                            console.error(err);
+                            errors.push(err);
+                            resolve();
+                        });
+                    }else{
+                        console.error("The image "+metadata.name+" does not have a thumbnail");
+                        errors.push("The image "+metadata.name+" does not have a thumbnail!\n");
+                        resolve();
+                    }
+
+                }
+            }));
+        });
+    });
+
+    Promise.all(promises).then(function(data) {
+        album.ownerMail = ownerMail;
+        album.save();
+        //res.redirect('/creation/'+album._id);
+        // console.log("metadatas");
+        // console.log(JSON.stringify(album));
+
+        // console.log("posting");
+        // $.ajax({
+        //     type: "POST",
+        //     url: "/creation/"+album._id,
+        //     data: {
+        //         errors: errors,
+        //         _csrf: "#{_csrf}"
+        //     }
+        // });
+        if(errors.length == 0){
+            errors = null;
+        }
+
+        console.log("rendering creation")
+        console.log(album);
+        res.render('creation/creation', {
+            album: album,
+            warning: errors
+        });
+
+
+    }).catch(err => console.error("An error occured with one of the metadatas: "+err));
+
+
+    // ------------------- Old version ----------------
+        /*
     console.log(auth);
     var drive = google.drive('v3');
 
@@ -138,17 +264,19 @@ function downloadMetadataAndCreateAlbum (auth, pickerresults, ownerMail, res) {
             drive.files.get({
                 auth: auth,
                 fileId: entry,
+                quotaUser: Math.random(),
                 fields: 'name, thumbnailLink, imageMediaMetadata'
             }, function (err, metadata) {
                 console.log(metadata);
                 if (err) {
                     console.error(err);
-                    reject(err);
+                    errors.push(err);
+                    resolve();
                 }
-                if(!metadata.imageMediaMetadata || !metadata.imageMediaMetadata.location){
+                else if(!metadata.imageMediaMetadata || !metadata.imageMediaMetadata.location){
                     console.error("The image "+metadata.name+" does not posess geographic location and will be excluded!");
                     errors.push("The image "+metadata.name+" does not posess geographic location and will be excluded!\n");
-                    reject("The image "+metadata.name+" does not posess geographic location and will be excluded!");
+                    resolve();
                 }
                 else {
                     var image = new Image();
@@ -177,12 +305,13 @@ function downloadMetadataAndCreateAlbum (auth, pickerresults, ownerMail, res) {
                             resolve();
                         }).catch(function (err) {
                             console.error(err);
-                            reject(err);
+                            errors.push(err);
+                            resolve();
                         });
                     }else{
                         console.error("The image "+metadata.name+" does not have a thumbnail");
                         errors.push("The image "+metadata.name+" does not have a thumbnail!\n");
-                        reject(err);
+                        resolve();
                     }
                 }
         })}));
@@ -216,4 +345,6 @@ function downloadMetadataAndCreateAlbum (auth, pickerresults, ownerMail, res) {
 
     }).catch(err => console.error("An error occured with one of the metadatas: "+err));
 
+
+    */
 }

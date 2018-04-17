@@ -10,10 +10,15 @@ exports.getCreation = (req, res) => {
 
   console.log("req.body");
   console.log(req.body);
-  Album.findById( req.params.id, function (err, album) {
+  console.log({_id: req.params.id, ownerMail: req.user.email});
+  Album.findOne( {_id: req.params.id, ownerMail: req.user.email}, function (err, album) {
     if(err){
       console.error(err);
-      return;
+        return res.status(500).send( { error: err });
+    }
+    if(!album){
+        console.error("Album not found!");
+        return res.status(404).send( { error: "Album not found!" });
     }
     console.log(JSON.stringify(album));
     album.images.sort((a,b) =>{
@@ -40,7 +45,7 @@ exports.getCreations = (req, res) => {
     Album.find( {ownerMail: req.user.email}, function (err, albums) {
         if(err){
             console.error(err);
-            return;
+            return res.status(500).send( { error: err });
         }
         console.log(JSON.stringify(albums));
         // album.images.sort((a,b) =>{ //TODO evtl
@@ -64,14 +69,36 @@ exports.getCreations = (req, res) => {
  */
 exports.saveCreation = (req, res) => {
     console.log("postCreation");
-    if(!req.body.album) return res.send(400, { error: "No Album included in Request Body" });
+    if(!req.body.album) return res.status(400).send( { error: "No Album included in Request Body" });
 
-    Album.findOneAndUpdate({_id: req.body.album._id}, req.body.album, (err, doc) =>{
+    Album.findOneAndUpdate({_id: req.body.album._id, ownerMail: req.user.email}, req.body.album, (err, doc) =>{
       if(err){
         console.error(err);
-         return res.send(500, { error: err });
+        return res.status(500).send( { error: err });
       }
+        if(!doc){
+            console.error("Album not found!");
+            return res.status(404).send( { error: "Album not found!" });
+        }
       return res.send("succesfully saved");
+    });
+
+};
+
+/**
+ * POST /
+ * Delete a Creation
+ */
+exports.deleteCreation = (req, res) => {
+    console.log("deleteCreation");
+    if(!req.params.id) return res.status(400).send({ error: "No Id included in Request Params" });
+
+    Album.remove({_id: req.params.id, ownerMail: req.user.email}, (err)=>{
+        if(err){
+            console.error(err);
+            return res.send(500, { error: err });
+        }
+        return res.redirect("/creations");
     });
 
 };

@@ -8,6 +8,7 @@ const imageSchema = new mongoose.Schema({
     lat: Number,
     lng: Number,
     thumbnail: String,
+    thumbnailLink: String,
     createdTime: Date
 });
 
