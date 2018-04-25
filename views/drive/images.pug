@@ -13,12 +13,12 @@ block content
         console.log("in images js");
 
         // The Client ID obtained from the Google API Console.
-        var clientId = '569072057508-jprgcdgfk6lcs2g4m0ieqftsrniuin5d.apps.googleusercontent.com'
+        //var clientId = '569072057508-jprgcdgfk6lcs2g4m0ieqftsrniuin5d.apps.googleusercontent.com'
 
         // Scope to use to access user's photos. TODO wenn ich das ändere, auch im play.pug ändern bzw. als umgebungsvariablen setzen
-        var scope = ['https://www.googleapis.com/auth/drive.photos.readonly']; //https://www.googleapis.com/auth/photos  https://www.googleapis.com/auth/drive.readonly    https://www.googleapis.com/auth/drive.photos.readonly	View the photos, videos and albums in your Google Photos
+        //var scope = ['https://www.googleapis.com/auth/drive.photos.readonly']; //https://www.googleapis.com/auth/photos  https://www.googleapis.com/auth/drive.readonly    https://www.googleapis.com/auth/drive.photos.readonly	View the photos, videos and albums in your Google Photos
 
-        var pickerApiLoaded = false;
+        var pickerApiLoaded = false; //TODO nach entwicklung entfernen
         var oauthToken ='#{accessToken}';
 
         // Use the API Loader script to load google.picker and gapi.auth.
@@ -63,7 +63,9 @@ block content
             console.log("createPicker called");
             if (pickerApiLoaded && oauthToken) {  //google.picker.ViewId.PHOTOS  --> all photos in their albums        DOCS_IMAGES --> all photos in gdrive
                 var picker = new google.picker.PickerBuilder().addView(google.picker.ViewId.DOCS_IMAGES)
-                    .setOAuthToken(oauthToken).setDeveloperKey(developerKey)
+                    .setOAuthToken(oauthToken)
+                    .setDeveloperKey(developerKey)
+                    .setTitle("Select the Images you want to add to your Presentation")
                     .enableFeature(google.picker.Feature.MULTISELECT_ENABLED).setCallback(pickerCallback).build();
                 picker.setVisible(true);
             }

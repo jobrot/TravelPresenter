@@ -1,5 +1,6 @@
 
 const Album = require('../models/Album.js');
+var Batchelor = require('batchelor');
 
 /**
  * GET /
@@ -84,6 +85,71 @@ exports.saveCreation = (req, res) => {
     });
 
 };
+
+
+
+/**
+ * POST /
+ * Update Locations of a Creation in Google Drive
+ */
+exports.updateLocations = (req, res) => {
+    console.log("updateLocations");
+    if(!req.body.album) return res.status(400).send( { error: "No Album included in Request Body" });
+
+    var batch = new Batchelor({
+        'uri':'https://www.googleapis.com/batch',
+        'method':'POST',
+        'auth': {
+            'bearer': [req.user.accessToken]
+        },
+        'headers': {
+            'Content-Type': 'multipart/mixed'
+        }
+    });
+
+
+
+    req.body.album.images.forEach((image) => {
+        console.log(image.position);
+        batch.add({
+            'method': 'PATCH',
+            'path': '/drive/v3/files/'+image.id,
+            'parameters':{
+                'Content-Type':'application/json;',
+                'body':{
+                    "imageMediaMetadata": {
+                        "location": {
+                            "latitude": image.lat,
+                            "longitude": image.lng
+                        }
+                    }
+                }
+            }
+        })
+    });
+
+
+    batch.run(function(err, response){
+        console.log(response);
+        if (err){
+            console.log("Error: " + err);
+        }
+
+        response.parts.forEach( (part, index) => {
+
+                var metadata = part.body;
+                console.log("metadata:");
+                console.log(metadata);
+                //metadata = JSON.parse(metadata);
+                if (part.statusCode != '200') {
+                    console.error("ERROR CODE IN RESPONSE: \n");
+                }
+
+        });
+    });
+
+};
+
 
 /**
  * POST /

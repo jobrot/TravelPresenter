@@ -50,80 +50,14 @@ exports.postImages  = (req, res) => {
     //console.log("refresh token: ");
     //console.log(oauth2Client.credentials.refresh_token);
 
-    //passportConfig.refreshAccessToken(req.user._id); //TODO may need this
-
-    //download(oauth2Client, req.body.pickerresults);
-                                //todo eig. oauth2client
+    /*
+     passportConfig.refreshAccessToken(req.user._id, function (refreshedaccessToken) {
+     downloadMetadataAndCreateAlbum(refreshedaccessToken, req.body.pickerresults, req.user.email,  res);
+     });
+     */ //TODO may need this
     downloadMetadataAndCreateAlbum(req.user.accessToken, req.body.pickerresults, req.user.email,  res);
-    //evtl callback und dann direkt in das render rein
 
-
-    //});
 };
-
-
-function download (auth, pickerresults) {
-    //console.log(auth);
-    var drive = google.drive('v3');
-    //TODO evtl make this parallel  (https://developers.google.com/drive/v3/web/batch)
-
-
-
-    pickerresults.split(',').forEach(entry => {
-        console.log("entry " + entry);
-        drive.files.get({ //TODO dass könnt ich entfernen
-            auth: auth,
-            fileId: entry
-        }, function (err, metadata) {
-            if (err) {
-                console.error(err);
-                return process.exit();
-            }
-
-            console.log('Downloading %s...', metadata.name);
-
-            //auth.setCredentials(tokens);
-
-            var dest = fs.createWriteStream(metadata.name);
-
-
-            console.log(drive.files.get({
-                fileId: entry,
-                alt: 'media',
-                auth: auth
-            })
-                .on('error', function (err) {
-                    console.log('Error downloading file', err);
-                    process.exit();
-                }))
-               ;
-
-            /*
-            drive.files.get({
-                fileId: entry,
-                alt: 'media',
-                auth: auth
-            })
-                .on('error', function (err) {
-                    console.log('Error downloading file', err);
-                    process.exit();
-                })
-                .pipe(dest);
-
-            dest
-                .on('finish', function () {
-                    console.log('Downloaded %s!', metadata.name);
-                    process.exit();
-                })
-                .on('error', function (err) {
-                    console.log('Error writing file', err);
-                    process.exit();
-                });
-                */
-        });
-    })
-
-}
 
 
 
@@ -174,18 +108,19 @@ function downloadMetadataAndCreateAlbum (auth, pickerresults, ownerMail, res) {
                     console.error("ERROR CODE IN RESPONSE: \n" + metadata);
                     resolve();
                 }
-                else if (!metadata.imageMediaMetadata || !metadata.imageMediaMetadata.location) {
-                    console.error("The image " + metadata.name + " does not posess geographic location and will be excluded!");
-                    errors.push("The image " + metadata.name + " does not posess geographic location and will be excluded!\n");
-                    resolve();
-                }
                 else {
                     var image = new Image();
                     image.id = metadata.id;
                     image.position = index;
                     image.filename = metadata.name;
-                    image.lat = metadata.imageMediaMetadata.location.latitude;
-                    image.lng = metadata.imageMediaMetadata.location.longitude;
+                    if (!metadata.imageMediaMetadata || !metadata.imageMediaMetadata.location) {
+                        console.error("The image " + metadata.name + " does not posess geographic location!");
+                        errors.push("The image " + metadata.name + " does not posess geographic location!\n");
+                    }
+                    else{
+                        image.lat = metadata.imageMediaMetadata.location.latitude;
+                        image.lng = metadata.imageMediaMetadata.location.longitude;
+                    }
                     image.createdTime = metadata.createdTime;
 
 

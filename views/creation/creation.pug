@@ -5,6 +5,7 @@ block content
   if warning
     div(id="warning")
         .alert.alert-warning.fade.in
+            div Some of the images you provided have no geographic location. They have been marked in yellow. Pin them manually to add them to the presentation.
             div=warning
   if album.images.length < 1
     .alert.alert-danger.fade.in
@@ -19,14 +20,15 @@ block content
             span Click to Add Text
   input(value="" type="text" style="padding-down:10px;" id="titleTextBox" name="titleTextBox" class="blur" hidden)
 
-  //h2 #{album.title}
-
   div(class="col-sm-8")
     div(class="row" style="padding-up:10px;")
       div(id='map' style='height: 80vh;')
     div(class="row")
       div(class="col-sm-8")
       div(class="col-sm-1 pull-right")
+        //button(id="updateLocButton" class="btn btn-default" onclick="updateLocationsGoogleDrive()" disabled="true")
+          span(class="glyphicon glyphicon-cloud-upload")
+            |Update image locations on Google Drive
         a(href='/play/'+album._id)
           span(class="glyphicon glyphicon-play-circle" style="font-size:3em;")
   div(class="col-sm-4 pre-scrollable" style="height: 100vh;")
@@ -38,15 +40,10 @@ block content
           .figure
             .figcaption.text-center #{image.filename}
             img(src="data:image/jpeg;base64, "+image.thumbnail.toString('base64') style="max-width:100%;max-height:100%;")
-          button(class="btn btn-default" style="margin:5px" onClick="setNewMarker(!{image.filename})")
+          button(class="btn btn-default" style="margin:5px" onClick="setNewMarker('"+image.filename+"')")
             span(class="glyphicon glyphicon-pushpin")
           button(class="btn btn-default" style="margin:5px" onClick="removeFileFromAlbum('"+image.filename+"')")
             span(class="glyphicon glyphicon-remove")
-
-
-      //li(class="list-group-item") First item
-      //li(class="list-group-item") Second item
-      //li(class="list-group-item") Third item
 
 
   script(type='text/javascript').
@@ -57,36 +54,95 @@ block content
   script(type='text/javascript').
     var markers = [];
     var travelpath;
+    var markerCluster;
+    var map;
     function initMap() {
       console.log("initmap");
 
-      var map = new google.maps.Map(document.getElementById('map'), {
+      //Find the first entry in the images containing coordinates
+      var center = {lat: 48.2081743, lng: 16.3738189};
+      for(i=0; i<album.images.length; i++){
+          var image = album.images[i];
+          if(image.lat && image.lng){
+            center = image;
+            break;
+          }
+      }
+
+      map = new google.maps.Map(document.getElementById('map'), {
         zoom: 3,
-        center: album.images[0]
+        center: center
       });
 
-      // Create an array of alphabetical characters used to label the markers.
-      var labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-      markers = album.images.map(function(location, i) {
-        return new google.maps.Marker({
-          _id: location._id,
-          position: location,
-          label: labels[i % labels.length],
-          draggable: true
-        });
-      });
-
-      // Add a marker clusterer to manage the markers.
-      var markerCluster = new MarkerClusterer(map, markers, {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m', gridSize: '10'});
       createPathfromLocations(album.images).setMap(map);
+      addImagesToMap();
 
 
     }
 
+    function addImagesToMap() {
+        // Create an array of alphabetical characters used to label the markers.
+        var labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+        console.log(album.images);
+
+        if(markerCluster){
+            markerCluster.clearMarkers();
+        }
+
+        markers = [];
+        var playable = true;
+        album.images.forEach(function (image, i) {
+            if (image.lat && image.lng) {
+                markers.push(new google.maps.Marker({
+                    _id: image.filename,
+                    position: image,
+                    label: labels[i % labels.length],
+                    draggable: true
+                }));
+            }
+            else{
+                document.getElementById(image.filename).classList.add('list-group-item-warning');
+                playable = false;
+            }
+        });
+        album.playable = playable; 
+        //Clear out previous marker Clusterers
+        //if(markerCluster){
+        //    markerCluster.setMap(null);
+        //    console.log("markercluster map set to null");
+        //}
+
+        console.log("markercount: "+markers.length);
+        console.log(markers);
+        markerCluster = new MarkerClusterer(map, markers, {
+            imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m',
+            gridSize: '12'
+        });
+
+        markers.forEach((marker) => {
+            marker.addListener('dragend', function() {
+                album.images.forEach((image, index) => {
+                    if(image.filename == marker._id){
+                        image.lat = marker.position.lat();
+                        image.lng = marker.position.lng();
+                    }
+                });
+                resetPath();
+                //document.getElementById("updateLocButton").disabled = false;
+            });
+            //marker.addListener('dragend', persistCreation(album));
+        });
+
+    }
+
     function createPathfromLocations(locs){
+        var locswithoutempty = locs.filter(location => location.lat && location.lng);
+
+
         travelpath = new google.maps.Polyline({
-            path: locs,
+            path: locswithoutempty,
             geodesic: true,
             strokeColor: '#FF0000',
             strokeOpacity: 1.0,
@@ -99,7 +155,33 @@ block content
 
 
     function setNewMarker(filename){
+        console.log("setting for "+filename);
+        //document.body.style.cursor = 'http://www.clker.com/cliparts/v/E/r/a/2/E/google-maps-marker-for-residencelamontagne.svg.hi.png';
+        //document.documentElement.style.cursor = 'url("data:image/x-icon;base64,/9j/4AAQSkZJRgABAQAAYABgAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/wAALCAAYABgBAREA/8QAGQAAAgMBAAAAAAAAAAAAAAAAAwcBAgUG/8QAIBAAAgICAgMBAQAAAAAAAAAAAQIDEQQFACEGEkFRYf/aAAgBAQAAPwBzcFkZEWJjS5M7ekUKF3aiaUCyaH85GJl4+diRZeJMk0Eyh45ENhgfo4bi082wt/5lnjA0ewyDohPHj7EIqBb9wGMbV7OFHbC6sV3RA7rRaHX+OatNdrIjFjp3RcsSaAJ7+mr6+3zQZQylTdEUaNcpDDFjQpDBGkUSD1VEWgo/AOE5/9k="), auto';
+        //map.setOptions({draggableCursor:'url("data:image/x-icon;base64,R0lGODlh+gD6AOevAAAAAAEBAQICAgMDAwQEBAUFBQYGBgcHBwgICAoKCgsLCwwMDA0NDQ4ODg8PDxERERISEhQUFBYWFhcXFxgYGBkZGRoaGhsbGxwcHB0dHR4eHh8fHyAgICEhISIiIiQkJCUlJSYmJicnJygoKCkpKSoqKiwsLC4uLi8vLzAwMDExMTMzMzQ0NDU1NTY2Njk5OTw8PD09PUBAQEJCQkREREVFRUZGRkdHR0hISEpKSktLS0xMTE9PT1BQUFFRUVRUVFVVVVdXV1hYWFlZWVpaWltbW1xcXF1dXV5eXl9fX2BgYGNjY2RkZGZmZmhoaGlpaWpqamtra2xsbG1tbW5ubm9vb3V1dXZ2dnd3d3h4eHl5eXp6ent7e3x8fH19fX5+fn9/f4eHh4mJiYuLi4yMjI6OjpCQkJGRkZOTk5SUlJWVlZaWlpqampubm52dnZ6enqOjo6SkpKWlpaampqioqKmpqaqqqq2tra+vr7CwsLKysrW1tba2tri4uLq6ury8vL6+vr+/v8HBwcTExMXFxcbGxsfHx8jIyMnJycvLy8zMzNDQ0NHR0dPT09TU1NXV1dbW1tnZ2dvb29zc3N3d3d7e3uLi4uPj4+Tk5OXl5ebm5ujo6Onp6evr6+zs7O3t7e7u7u/v7/Dw8PHx8fLy8vPz8/X19ff39/j4+Pn5+fr6+vv7+/z8/P39/f7+/v///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////yH+EUNyZWF0ZWQgd2l0aCBHSU1QACH5BAEKAP8ALAAAAAD6APoAAAj+AP8JHEiwoMGDCBMqXMiwocOHECNKnEixosWLGDNq3Mixo8ePIEOKHEmypMmTKFOqXMmypcuXMGPKnEmzps2bOHPq3Mmzp8+fQIMKHUq0qNGjSJMqXcq0qdOnUKNKnUq1qtWrWLNq3cq1q9evYMOKHUu2rNmzaNOqXcu2rdu3cOPKnUu3rt27ePPq3cu3r9+/gAMLHky4sOHDiBMrXsy4sePHkCNLnky5suXLmDNr3sy5s+fPoEOLHk26tOnTqFOrXs26tevXsKs2SjMmT2yiPADoBkABz22gK3bvFtDmd88xwoUTN75TRXLlxZnjbPBcORvpNzFUt469JpLt3Lv+y3yEAPzw6+Jj0hlgXrcA9Olf1iHQHkAANfFhzq9/P798+u315x9LhihQn33wDXgSIxAcqJuACpYUyQQO7gZhhCFNYkGFwl2IYUeXdMBhch5+mBEnI4z4XIkmVtSJCSpWx2KLErEQ43Yz0uhQDDeCl6OOCuHQo3k/AmnQDkMGiJ+RDAWRJH9LMonQEk8eWKSOTlTpYABpSFnQFVpWyKWXAnURJodjSlnGmSOmCSQabKroZotuBBCnnG/QOAd7d6powCMm5lFAnzcy8WEfBxB6IwkYCpKAotV5QAaf23EQ4SEMQPrcCJj8Ewelz+Wg4CIPaJocCpwM9Ol2dgwIiQT+pgrngkFxACjcDwNOckGsu8WA0B8g7IYAFgNawgGvutmwECJy7KEgJyQgC4AOr92xwrXYZqvtttxeW4G0QcTmhbRsFvGbmeRW6QRzXKSbpBXYaeHujcR2l8W8aJIRHxb4WnmGf1T0a94AeQ4ohcDVFdBqhFEgLNwBvn0IhcMAJOAHjU8gvAAgQGaJ7wOHMNnEvBIs4uV35FbgCJn/HCHtBpOwLJARvIpwicwDFWFqCZrgTBARkK7Qic8FCUEoDEQfZHScMiSNUA9xBuL0QYDYeabUUxNESKZsYp31P1vf6fXUYYv9ddlmk811n2P7jDbbTr8NN9GDrN1eBjf02Db+mXKDl0HMUMe4t5R9b/f3QD4IjnPh1R1O0BAqDg4k4885XhDQHEpOI+XJWW4QzRVqbiLnwnl+kMsOio4h6buZjhDK9amuIOu6uZ5QEgfK7h/tANiukBKxG8m77wtlbJ7u6Q0fM0UTg4d8d8pf1PB2z0sXPUZTUN/i9RkF/Fz1v3GvURXffyj+RvIKBz5s53O0hfoRtt9Ru7qt35r8Ho0LgP2r4f/RF/vbnd3MQzyQgIF/qKmbgzJAia9FxH8OPMgjBui3BkbwISlY4PIu2JDsHaiAHCQIH6x2tw2GUCGboFB9QHhCgdTggyZsIULEAEMZLkQRBlhhDG1okA/U5wTsFuTh6wLUBCEqxA7tiYAejJiQSjjAPDPIBBMT8gLwEAAMU0zI+ypViCwiRBCgEg4QvJgQDVSnAXAg49Oq0wJJqPEga1gRFd4owUcJhwJ9oONBUJCcHnhCjwaZnm4QYAZAGmSEuykBIwxZkBTu5giMNAgNdKPESBYkDLqZQacsOZBEGOCKnCxICDhAiFASxAhjNOVA+JBGVQ5kaK6MpSxnScta2vKWuMylLnfJy1768pfADKYwh0nMYhrzmMhMpjKXycxmOvOZ0IymNKdJzWpa85rYzKY2t8nNbnrzm+AMpzjHSc5ymvOc6JRLQAAAOw=="), auto'});
+        map.setOptions({draggableCursor:'crosshair'})
 
+        var listener=  map.addListener('click', function(e) {
+            //var marker = new google.maps.Marker({
+            //    position: position,
+            //    map: map
+            //});
+
+            album.images.forEach((image) => {
+                if(image.filename == filename){
+                    image.lat=e.latLng.lat();
+                    image.lng = e.latLng.lng();
+                    document.getElementById(image.filename).classList.remove('list-group-item-warning');
+                }
+            });
+            resetPath();
+            addImagesToMap();
+            google.maps.event.removeListener(listener);
+            map.setOptions({draggableCursor:'default'});
+            persistCreation(album);
+
+            //document.getElementById("updateLocButton").disabled = false;
+        });
     }
 
     function removeFileFromAlbum(filename) {
@@ -111,7 +193,11 @@ block content
 
         var element = document.getElementById(filename);
         element.parentNode.removeChild(element);
+        resetPath();
+    }
 
+    function resetPath() {
+        console.log("reset");
         var map = travelpath.getMap();
         travelpath.setMap(null);
         createPathfromLocations(album.images);
@@ -119,7 +205,7 @@ block content
         updatePositionsPersistCreation(album);
     }
 
-  script(type='text/javascript').
+
     var idsInOrder = [];
     function sortArrayWithComparatorArray(a, b) {
         return idsInOrder.indexOf(a._id) - idsInOrder.indexOf(b._id);
@@ -173,6 +259,19 @@ block content
             }
         });
     }
+
+    function updateLocationsGoogleDrive() {
+        $.ajax({
+            type: "POST",
+            url: "/creation/updatelocations",
+            data: {
+                album: album,
+                _csrf: "#{_csrf}"
+            }
+        });
+        //document.getElementById("updateLocButton").disabled = true;
+    }
+
 
     //Code for editable label
     $('.editableTitle').click(function () {
