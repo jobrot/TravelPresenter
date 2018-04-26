@@ -101,8 +101,8 @@ function downloadMetadataAndCreateAlbum (auth, pickerresults, ownerMail, res) {
         response.parts.forEach( (part, index) => {
             promises.push(new Promise(function(resolve, reject) {
                 var metadata = part.body;
-                console.log("metadata:");
-                console.log(metadata);
+                //console.log("metadata:");
+                //console.log(metadata);
                 //metadata = JSON.parse(metadata);
                 if (part.statusCode != '200') {
                     console.error("ERROR CODE IN RESPONSE: \n" + metadata);

@@ -29,7 +29,8 @@ block content
         //button(id="updateLocButton" class="btn btn-default" onclick="updateLocationsGoogleDrive()" disabled="true")
           span(class="glyphicon glyphicon-cloud-upload")
             |Update image locations on Google Drive
-        a(href='/play/'+album._id)
+        //a(href='/play/'+album._id)
+        button(id="playbutton" class="btn btn-link" onclick="window.location.href='/play/"+album._id+"'")
           span(class="glyphicon glyphicon-play-circle" style="font-size:3em;")
   div(class="col-sm-4 pre-scrollable" style="height: 100vh;")
     //button(onclick='test()')
@@ -107,7 +108,15 @@ block content
                 playable = false;
             }
         });
-        album.playable = playable; 
+        album.playable = playable;
+        if(playable){
+            console.log("disabled = false");
+            document.getElementById("playbutton").disabled=false;
+        }
+        else {
+            console.log("disabled = true");
+            document.getElementById("playbutton").disabled=true;
+        }
         //Clear out previous marker Clusterers
         //if(markerCluster){
         //    markerCluster.setMap(null);
@@ -162,18 +171,26 @@ block content
         map.setOptions({draggableCursor:'crosshair'})
 
         var listener=  map.addListener('click', function(e) {
-            //var marker = new google.maps.Marker({
-            //    position: position,
-            //    map: map
-            //});
-
+            var playable = true;
             album.images.forEach((image) => {
                 if(image.filename == filename){
-                    image.lat=e.latLng.lat();
+                    image.lat = e.latLng.lat();
                     image.lng = e.latLng.lng();
                     document.getElementById(image.filename).classList.remove('list-group-item-warning');
                 }
+                if(!(image.lat && image.lng)){
+                    playable = false;
+                }
             });
+            album.playable = playable;
+            if (playable) {
+                console.log("disabled = false");
+                document.getElementById("playbutton").disabled = false;
+            }
+            else {
+                console.log("disabled = true");
+                document.getElementById("playbutton").disabled = true;
+            }
             resetPath();
             addImagesToMap();
             google.maps.event.removeListener(listener);
@@ -190,6 +207,23 @@ block content
                     object.splice(index, 1);
                }
             });
+
+        var playable = true;
+        album.images.forEach(image => {
+            if(!(image.lat && image.lng)){
+                playable=false;
+            }
+        })
+        album.playable=playable;
+        if (playable) {  //TODO extract to function
+            console.log("disabled = false");
+            document.getElementById("playbutton").disabled = false;
+        }
+        else {
+            console.log("disabled = true");
+            document.getElementById("playbutton").disabled = true;
+        }
+
 
         var element = document.getElementById(filename);
         element.parentNode.removeChild(element);

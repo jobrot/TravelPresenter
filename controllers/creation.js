@@ -138,8 +138,8 @@ exports.updateLocations = (req, res) => {
         response.parts.forEach( (part, index) => {
 
                 var metadata = part.body;
-                console.log("metadata:");
-                console.log(metadata);
+                //console.log("metadata:");
+                //console.log(metadata);
                 //metadata = JSON.parse(metadata);
                 if (part.statusCode != '200') {
                     console.error("ERROR CODE IN RESPONSE: \n");

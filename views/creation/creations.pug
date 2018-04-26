@@ -7,14 +7,20 @@ block content
     .row
       .panel.panel-default(style='background-color: #fff; height=100%')
           .panel-body
-              .col-lg-4
+              .col-lg-3
                 img(src="data:image/jpeg;base64, "+album.images[0].thumbnail.toString('base64'), class='img-responsive')
-              .col-lg-4
+              .col-lg-3
                   a(href='/creation/' + album._id, style='line-height:3em; font-size:3em; vcenter')
                       span(class='glyphicon glyphicon-edit').
                       |&nbsp; #{album.title}
-
-              .col-lg-4
+              .col-lg-3
+                  if album.playable
+                    button(class="btn btn-link" onclick="window.location.href='/play/" + album._id + "'")
+                      span(class="glyphicon glyphicon-play-circle" style="font-size:3em;")
+                  else
+                    button(class="btn btn-link" onclick="window.location.href='/play/" + album._id + "'" disabled)
+                      span(class="glyphicon glyphicon-play-circle" style="font-size:3em;")
+              .col-lg-3
                 form(action='/creation/delete/' + album._id, method="POST", style="display: inline;")
                   input(type='hidden', name='_csrf', value=_csrf)
                   span(style='font-size:8em;')
