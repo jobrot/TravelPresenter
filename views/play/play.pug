@@ -11,14 +11,13 @@ block content
       img(class='playmodal-content' id='img3' style='display: none')
       img(class='playmodal-content' id='img4' style='display: none')
   script(type='text/javascript').
-    var oauthToken = '#{accessToken}';
+    //var oauthToken = '#{accessToken}';
     var currentTimeOut; //Id of current Timeout, to enable user to skip it
     var currentResolve;
     var markers = [];
     var travelpath;
     function initMap() {
       console.log("initmap");
-      console.log("accessToken: " + oauthToken);
       var map = new google.maps.Map(document.getElementById('map'), {
         zoom: 8,
         center: locations[0]

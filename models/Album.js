@@ -10,6 +10,10 @@ const albumSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    shared: {
+        type: Boolean,
+        default: false
+    },
     images: [Image.schema]
 });
 

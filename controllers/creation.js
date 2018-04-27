@@ -168,3 +168,130 @@ exports.deleteCreation = (req, res) => {
     });
 
 };
+
+
+/**
+ * POST /
+ * Share a Creation
+ */
+exports.shareCreation = (req, res) => {
+    console.log("shareCreation");
+    if(!req.params.id) return res.status(400).send({ error: "No Id included in Request Params" });
+
+    Album.findOneAndUpdate({_id: req.params.id, ownerMail: req.user.email}, {shared: true}, (err, doc)=>{
+        if(err){
+            console.error(err);
+            return res.send(500, { error: err });
+        }
+
+        console.log(doc);
+
+        //doc.images
+
+
+        var batch = new Batchelor({
+            'uri':'https://www.googleapis.com/batch',
+            'method':'POST',
+            'auth': {
+                'bearer': [req.user.accessToken]
+            },
+            'headers': {
+                'Content-Type': 'multipart/mixed'
+            }
+        });
+
+
+
+        doc.images.forEach((image) => {
+            console.log(image.position);
+            batch.add({
+                'method': 'POST',
+                'path': '/drive/v3/files/'+image.id+'/permissions',
+                'parameters':{
+                    'Content-Type':'application/json;',
+                    'body':{
+                        'role': 'reader',
+                        'type': 'anyone',
+                        'allowFileDiscovery': false
+                        }
+                    }
+                });
+        });
+
+        batch.run(function(err, response){
+            console.log(response);
+            if (err){
+                console.error("Error: " + err);
+            }
+        });
+
+
+
+
+
+
+        return res.redirect("/creations");
+    });
+
+};
+
+
+
+/**
+ * POST /
+ * Unshare a Creation
+ */
+exports.unshareCreation = (req, res) => {
+    console.log("unshareCreation");
+    if(!req.params.id) return res.status(400).send({ error: "No Id included in Request Params" });
+
+    Album.findOneAndUpdate({_id: req.params.id, ownerMail: req.user.email}, {shared: false}, (err, doc)=>{
+        if(err){
+            console.error(err);
+            return res.send(500, { error: err });
+        }
+
+        console.log(doc);
+
+        //doc.images
+
+
+        var batch = new Batchelor({
+            'uri':'https://www.googleapis.com/batch',
+            'method':'POST',
+            'auth': {
+                'bearer': [req.user.accessToken]
+            },
+            'headers': {
+                'Content-Type': 'multipart/mixed'
+            }
+        });
+
+
+
+        doc.images.forEach((image) => {
+            console.log(image.position);
+            batch.add({
+                'method': 'DELETE',
+                'path': '/drive/v3/files/'+image.id+'/permissions/anyoneWithLink',
+                'parameters':{
+                    'Content-Type':'application/json;',
+                    'body':{
+                        
+                    }
+                }
+            });
+        });
+
+        batch.run(function(err, response){
+            console.log(response);
+            if (err){
+                console.error("Error: " + err);
+            }
+        });
+
+
+        return res.redirect("/creations");
+    });
+
+};

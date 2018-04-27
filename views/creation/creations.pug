@@ -7,24 +7,53 @@ block content
     .row
       .panel.panel-default(style='background-color: #fff; height=100%')
           .panel-body
-              .col-lg-3
+              .col-lg-7
                 img(src="data:image/jpeg;base64, "+album.images[0].thumbnail.toString('base64'), class='img-responsive')
-              .col-lg-3
-                  a(href='/creation/' + album._id, style='line-height:3em; font-size:3em; vcenter')
+              .col-lg-1
+                  a(href='/creation/' + album._id, style='font-size:3em;')
                       span(class='glyphicon glyphicon-edit').
                       |&nbsp; #{album.title}
-              .col-lg-3
+              .col-lg-1
                   if album.playable
                     button(class="btn btn-link" onclick="window.location.href='/play/" + album._id + "'")
-                      span(class="glyphicon glyphicon-play-circle" style="font-size:3em;")
+                      span(class="glyphicon glyphicon-play-circle" style="font-size:3em;" )
                   else
                     button(class="btn btn-link" onclick="window.location.href='/play/" + album._id + "'" disabled)
-                      span(class="glyphicon glyphicon-play-circle" style="font-size:3em;")
-              .col-lg-3
+                      span(class="glyphicon glyphicon-play-circle" style="font-size:3em;" data-toggle="tooltip"
+                      title="The album can´t be played as some Images do not possess a proper GPS-tag.")
+
+              .col-lg-1
+                  if album.playable != true
+                      button(class="btn btn-link text-error" disabled)
+                          span(class="glyphicon glyphicon-share text-error" style="font-size:3em; background:none; border:none" data-toggle="tooltip" data-placement="top"
+                          title="The album can´t be shared as some Images do not possess a proper GPS-tag.")
+                  else if album.shared
+                      button(class="btn btn-link" onClick="copyToClipboardWithCurrentHref('"+album._id+"')")
+                          span(id="share"+album._id class="glyphicon glyphicon-share text-success" style="font-size:3em; background:none; border:none" data-toggle="tooltip"
+                            title="Click to copy the Sharelink to clipboard!")
+                  else
+                    form(action='/creation/share/' + album._id, method="POST", style="display: inline;")
+                      input(type='hidden', name='_csrf', value=_csrf)
+                      button(type="submit" value="submit" class="btn btn-link" style="background:none; border:none")
+                        span(class="glyphicon glyphicon-share" style="font-size:3em;")
+
+              .col-lg-1
+                  if album.shared != true
+                      button(class="btn btn-link text-error" disabled)
+                          span(class="glyphicon glyphicon-ban-circle text-error" style="font-size:3em; background:none; border:none" data-toggle="tooltip" data-placement="top"
+                          title="The album can´t be unshared as it is not shared")
+                  else
+                      form(action='/creation/unshare/' + album._id, method="POST", style="display: inline;")
+                          input(type='hidden', name='_csrf', value=_csrf)
+                          button(type="submit" value="submit" class="btn btn-link" style="background:none; border:none")
+                              span(class="glyphicon glyphicon-ban-circle" style="font-size:3em;" data-toggle="tooltip"
+                              title="Unshare this album and all of its Images")
+
+
+              .col-lg-1
                 form(action='/creation/delete/' + album._id, method="POST", style="display: inline;")
                   input(type='hidden', name='_csrf', value=_csrf)
-                  span(style='font-size:8em;')
-                    button(type="submit" value="submit" class="glyphicon glyphicon-remove button pull-right" style="background:none; border:none")
+                  button(type="submit" value="submit" class="glyphicon glyphicon-remove button pull-right" style="font-size:3em; background:none; border:none")
 
   .row
         a(href='/drive/images', style='color: #1565c0')
@@ -33,3 +62,25 @@ block content
 
 
 
+
+  script(type="text/javascript").
+      $(document).ready(function () {
+          $('[data-toggle="tooltip"]').tooltip({'placement': 'top'});
+      });
+
+      function copyToClipboardWithCurrentHref(id) {
+          var copyText = window.location.href.slice(0,-9)+"play/"+id;
+          const el = document.createElement('textarea');
+          el.value = copyText;
+          document.body.appendChild(el);
+          el.select();
+          document.execCommand('copy');
+          document.body.removeChild(el);
+
+
+          document.getElementById('share'+id).title = "Copied the text: " + copyText;
+
+          $("#share"+id).attr("title", "Copied link to the shared Presentation to Clipboard")
+              .tooltip("fixTitle")
+              .tooltip("show");
+      }
