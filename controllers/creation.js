@@ -70,18 +70,42 @@ exports.getCreations = (req, res) => {
  */
 exports.saveCreation = (req, res) => {
     console.log("postCreation");
-    if(!req.body.album) return res.status(400).send( { error: "No Album included in Request Body" });
+    var updatedAlbum =req.body.album;
+    if(!updatedAlbum) return res.status(400).send( { error: "No Album included in Request Body" });
 
-    Album.findOneAndUpdate({_id: req.body.album._id, ownerMail: req.user.email}, req.body.album, (err, doc) =>{
-      if(err){
-        console.error(err);
-        return res.status(500).send( { error: err });
-      }
+
+    console.log(updatedAlbum);
+    Album.findOne({_id: updatedAlbum._id, ownerMail: req.user.email}, (err, doc) =>{
+        if(err){
+            console.error(err);
+            return res.status(500).send( { error: err });
+        }
         if(!doc){
             console.error("Album not found!");
             return res.status(404).send( { error: "Album not found!" });
         }
-      return res.send("succesfully saved");
+
+        updatedAlbum.images.forEach(image => {
+            doc.images.forEach(oldImage =>{
+                if(image.id == oldImage.id){
+                    image.thumbnail = oldImage.thumbnail;
+                }
+            });
+        });
+
+        Album.findOneAndUpdate({_id: updatedAlbum._id, ownerMail: req.user.email}, updatedAlbum, (err, doc) =>{
+            if(err){
+                console.error(err);
+                return res.status(500).send( { error: err });
+            }
+            if(!doc){
+                console.error("Album not found!");
+                return res.status(404).send( { error: "Album not found!" });
+            }
+
+
+        return res.send("succesfully saved");
+        });
     });
 
 };
@@ -90,7 +114,7 @@ exports.saveCreation = (req, res) => {
 
 /**
  * POST /
- * Update Locations of a Creation in Google Drive
+ * Update Locations of a Creation in Google Drive (not supported by Drive API, therefore unused)
  */
 exports.updateLocations = (req, res) => {
     console.log("updateLocations");
@@ -223,6 +247,12 @@ exports.shareCreation = (req, res) => {
             if (err){
                 console.error("Error: " + err);
             }
+
+            response.parts.forEach( (part, index) => {
+                if (part.statusCode != '200') {
+                    console.error("ERROR CODE IN RESPONSE: \n" + part);
+                }
+            });
         });
 
 

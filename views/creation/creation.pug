@@ -36,10 +36,15 @@ block content
     //button(onclick='test()')
     //class="list-group"
     ol(id="sortable" )
-      each image in album.images
+      - var n = 0
+      - var labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      while n<album.images.length
+        - var image = album.images[n]
+
         li(class="list-group-item" id=image.filename)
           .figure
-            .figcaption.text-center #{image.filename}
+            .figcaption.text-center #{labels[n % labels.length]} #{album.title}
+            - n++
             img(src="data:image/jpeg;base64, "+image.thumbnail.toString('base64') style="max-width:100%;max-height:100%;")
           button(class="btn btn-default" style="margin:5px" onClick="setNewMarker('"+image.filename+"')")
             span(class="glyphicon glyphicon-pushpin")
@@ -95,6 +100,9 @@ block content
         markers = [];
         var playable = true;
         album.images.forEach(function (image, i) {
+            //Remove thumbnails from the js object to save memory and post-space
+            delete image.thumbnail;
+
             if (image.lat && image.lng) {
                 markers.push(new google.maps.Marker({
                     _id: image.filename,
@@ -295,6 +303,7 @@ block content
     }
 
     function updateLocationsGoogleDrive() {
+
         $.ajax({
             type: "POST",
             url: "/creation/updatelocations",
