@@ -66,6 +66,7 @@ block content
                     .setOAuthToken(oauthToken)
                     .setDeveloperKey(developerKey)
                     .setTitle("Select the Images you want to add to your Presentation")
+                    // https://developers.google.com/picker/docs/reference#DocsViewMode
                     .enableFeature(google.picker.Feature.MULTISELECT_ENABLED).setCallback(pickerCallback).build();
                 picker.setVisible(true);
             }

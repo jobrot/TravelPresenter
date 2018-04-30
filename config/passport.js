@@ -134,7 +134,7 @@ exports.refreshAccessToken = (id, callback) =>{
             user.accessToken=accessToken;
             //user.refreshToken=refreshToken;
             user.save((err) => {
-                console.log(err);
+                console.error(err);
             });
             return callback(accessToken);
         });

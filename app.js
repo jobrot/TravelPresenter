@@ -52,7 +52,7 @@ const app = express();
  * Connect to MongoDB.
  */
 mongoose.Promise = global.Promise;
-mongoose.connect(process.env.MONGODB_URI || process.env.MONGOLAB_URI);
+mongoose.connect(process.env.MONGODB_URI || process.env.MONGOLAB_URI, { useMongoClient: true });
 mongoose.connection.on('error', (err) => {
   console.error(err);
   console.log('%s MongoDB connection error. Please make sure MongoDB is running.', chalk.red('✗'));
@@ -149,6 +149,9 @@ app.post('/creation/updatelocations', passportConfig.isAuthenticated, creationCo
 app.post('/creation/delete/:id', passportConfig.isAuthenticated, creationController.deleteCreation);
 app.post('/creation/share/:id', passportConfig.isAuthenticated, creationController.shareCreation);
 app.post('/creation/unshare/:id', passportConfig.isAuthenticated, creationController.unshareCreation);
+
+//For all Reloads on post requests etc
+app.get('/creation/*', passportConfig.isAuthenticated, creationController.getCreations);
 
 app.get('/play/:id',  playController.getPlay);  //TODO maybe custom guard
 

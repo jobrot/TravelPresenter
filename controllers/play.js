@@ -19,20 +19,32 @@ exports.getPlay = (req, res) => {
 
   Album.findOne({$or:[{_id: req.params.id, ownerMail: mail}, {_id: req.params.id, shared: true}]}, function (err, album) {
     if(err){
-      console.error(err);
-      return;
-    }
-    //passportConfig.refreshAccessToken(req.user._id, accessToken =>  { //TODO possibly unneccessary
-        if(err){
-            console.error(err);
-            return;
-        }
-        //console.log("accesstoken "+token);
         res.render('play/play', {
             album: album,
-            //accessToken: accessToken
+            error: "The Presentation could not be played."
         });
-    //});
+        return;
+    }
+    if(!album){
+        if(mail =="-"){
+            res.render('play/play', {
+                album: album,
+                error: "The Presentation you requested was not shared by the Owner."
+            });
+        }
+        else{
+            res.render('play/play', {
+                album: album,
+                error: "The Presentation you requested does not exist or was not shared with you by the Owner."
+            });
+        }
+        return;
+    }
+
+    res.render('play/play', {
+        album: album
+    });
+
   });
 
 };

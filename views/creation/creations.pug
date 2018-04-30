@@ -1,6 +1,17 @@
 extends ../layout
 
 block content
+  div(id="alert")
+    if successmsg
+        .alert.alert-success.fade.in
+            div=successmsg
+    if warningmsg
+        .alert.alert-warning.fade.in
+            div=warningmsg
+    if errormsg
+        .alert.alert-danger.fade.in
+            div=errormsg
+
   h3 Your Creations
 
   each album in albums
@@ -29,13 +40,13 @@ block content
                           span(class="glyphicon glyphicon-share text-error" style="font-size:3em; background:none; border:none" data-toggle="tooltip" data-placement="top"
                           title="The album can´t be shared as some Images do not possess a proper GPS-tag.")
                   else if album.shared
-                      button(class="btn btn-link" onClick="copyToClipboardWithCurrentHref('"+album._id+"')")
+                      button(class="btn btn-link" onClick="copyToClipboardAndUpdateTooltips('"+album._id+"')")
                           span(id="share"+album._id class="glyphicon glyphicon-share text-success" style="font-size:3em; background:none; border:none" data-toggle="tooltip"
                             title="Click to copy the Sharelink to clipboard")
                   else
                     form(action='/creation/share/' + album._id, method="POST", style="display: inline;")
                       input(type='hidden', name='_csrf', value=_csrf)
-                      button(type="submit" value="submit" class="btn btn-link" style="background:none; border:none")
+                      button(type="submit" value="submit" class="btn btn-link" style="background:none; border:none" onClick="copyToClipboardWithCurrentHref('"+album._id+"')")
                         span(class="glyphicon glyphicon-share" style="font-size:3em;" data-toggle="tooltip" data-placement="top"
                         title="Share the Album publicly")
 
@@ -72,18 +83,21 @@ block content
       });
 
       function copyToClipboardWithCurrentHref(id) {
-          var copyText = window.location.href.slice(0,-9)+"play/"+id;
+          var copyText = window.location.href.split("/").slice(0,3).join("/")+"play/"+id;
           const el = document.createElement('textarea');
           el.value = copyText;
           document.body.appendChild(el);
           el.select();
           document.execCommand('copy');
           document.body.removeChild(el);
+      }
 
-
-          document.getElementById('share'+id).title = "Copied the text: " + copyText;
-
-          $("#share"+id).attr("title", "Copied link to the shared Presentation to Clipboard")
+      function copyToClipboardAndUpdateTooltips (id) {
+          copyToClipboardWithCurrentHref(id);
+          $("#share" + id).attr("title", "Copied link to the shared Presentation to Clipboard")
               .tooltip("fixTitle")
               .tooltip("show");
       }
+
+      //Removing Alerts
+      $("#alert").ready().delay(10000).fadeOut();

@@ -1,11 +1,11 @@
-
-const Album = require('../models/Album.js');
-var Batchelor = require('batchelor');
-
 /**
  * GET /
  * Creation page.
  */
+const Album = require('../models/Album.js');
+const passportConfig = require ("../config/passport");
+const Batchelor = require('batchelor');
+
 exports.getCreation = (req, res) => {
   //query all locations and pass them to the rendering function
 
@@ -49,14 +49,14 @@ exports.getCreations = (req, res) => {
             return res.status(500).send( { error: err });
         }
         console.log(JSON.stringify(albums));
-        // album.images.sort((a,b) =>{ //TODO evtl
+        // album.images.sort((a,b) =>{ //TODO evtl, aber wenn dann auch in den anderen funktionen
         //     if(a.position<b.position) return -1;
         //     else if (a.position>b.position) return 1;
         //     else return 0;
         // });
 
         res.render('creation/creations', {
-            owner: req.user.name,
+            //owner: req.user.name,
             albums: albums
         });
     });
@@ -183,12 +183,20 @@ exports.deleteCreation = (req, res) => {
     console.log("deleteCreation");
     if(!req.params.id) return res.status(400).send({ error: "No Id included in Request Params" });
 
-    Album.remove({_id: req.params.id, ownerMail: req.user.email}, (err)=>{
-        if(err){
-            console.error(err);
-            return res.send(500, { error: err });
-        }
-        return res.redirect("/creations");
+    Album.remove({_id: req.params.id, ownerMail: req.user.email}, (err1)=>{
+        Album.find( {ownerMail: req.user.email}, function (err2, albums) {
+            if(err1 || err2){
+                console.error(err1 + err2);
+                res.render('creation/creations', {
+                    albums: albums,
+                    errormsg: "Could not remove Presentation "+req.params.id+"!"
+                });
+            }
+            res.render('creation/creations', {
+                albums: albums,
+                successmsg: "Presentation "+req.params.id+" removed successfully."
+            });
+        });
     });
 
 };
@@ -202,67 +210,87 @@ exports.shareCreation = (req, res) => {
     console.log("shareCreation");
     if(!req.params.id) return res.status(400).send({ error: "No Id included in Request Params" });
 
-    Album.findOneAndUpdate({_id: req.params.id, ownerMail: req.user.email}, {shared: true}, (err, doc)=>{
-        if(err){
-            console.error(err);
-            return res.send(500, { error: err });
-        }
-
-        console.log(doc);
-
-        //doc.images
-
-
-        var batch = new Batchelor({
-            'uri':'https://www.googleapis.com/batch',
-            'method':'POST',
-            'auth': {
-                'bearer': [req.user.accessToken]
-            },
-            'headers': {
-                'Content-Type': 'multipart/mixed'
+    Album.findOne({_id: req.params.id, ownerMail: req.user.email}, (err1, doc)=>{
+        Album.find( {ownerMail: req.user.email}, function (err2, albums) {
+            if(err1 || err2){
+                console.error(err1 + err2);
+                res.render('creation/creations', {
+                    albums: albums,
+                    errormsg: "Could not share Presentation "+req.params.id+" successfully!"
+                });
             }
-        });
 
 
+            console.log(doc);
+            passportConfig.refreshAccessToken(req.user._id, accessToken => {
 
-        doc.images.forEach((image) => {
-            console.log(image.position);
-            batch.add({
-                'method': 'POST',
-                'path': '/drive/v3/files/'+image.id+'/permissions',
-                'parameters':{
-                    'Content-Type':'application/json;',
-                    'body':{
-                        'role': 'reader',
-                        'type': 'anyone',
-                        'allowFileDiscovery': false
-                        }
+
+                var batch = new Batchelor({
+                    'uri':'https://www.googleapis.com/batch',
+                    'method':'POST',
+                    'auth': {
+                        'bearer': [accessToken]
+                    },
+                    'headers': {
+                        'Content-Type': 'multipart/mixed'
                     }
                 });
-        });
 
-        batch.run(function(err, response){
-            console.log(response);
-            if (err){
-                console.error("Error: " + err);
-            }
 
-            response.parts.forEach( (part, index) => {
-                if (part.statusCode != '200') {
-                    console.error("ERROR CODE IN RESPONSE: \n" + part);
-                }
+
+                doc.images.forEach((image) => {
+                    console.log(image.position);
+                    batch.add({
+                        'method': 'POST',
+                        'path': '/drive/v3/files/'+image.id+'/permissions',
+                        'parameters':{
+                            'Content-Type':'application/json;',
+                            'body':{
+                                'role': 'reader',
+                                'type': 'anyone',
+                                'allowFileDiscovery': false
+                                }
+                            }
+                        });
+                });
+
+                batch.run(function(err, response){
+                    console.log(response);
+                    if (err){
+                        console.error("Error: " + err);
+                        res.render('creation/creations', {
+                            albums: albums,
+                            errormsg: "Could not share Presentation "+req.params.id+" successfully!"
+                        });
+                    }
+
+                    var noErrors = response.parts.every( (part, index) => {
+                        if (part.statusCode != '200') {
+                            console.error("ERROR CODE IN RESPONSE: \n" + part);
+                            res.render('creation/creations', {
+                                albums: albums,
+                                errormsg: "Could not share Presentation "+req.params.id+" successfully! Maybe you do not posess the necessary rights for the files on Google Drive?"
+                            });
+                            return false;
+                        }
+                        return true;
+                    });
+                    if(noErrors) {
+                        Album.findOneAndUpdate({
+                            _id: req.params.id,
+                            ownerMail: req.user.email
+                        }, {shared: true}, (err1, doc) => {
+                            albums.find(album => {return album._id == req.params.id}).shared = true;
+                            res.render('creation/creations', {
+                                albums: albums, //Veraltete version von albums
+                                successmsg: "Presentation " + req.params.id + " shared successfully.\nThe sharelink was copied to your Clipboard."
+                            });
+                        });
+                    }
+                });
             });
         });
-
-
-
-
-
-
-        return res.redirect("/creations");
     });
-
 };
 
 
@@ -275,53 +303,80 @@ exports.unshareCreation = (req, res) => {
     console.log("unshareCreation");
     if(!req.params.id) return res.status(400).send({ error: "No Id included in Request Params" });
 
-    Album.findOneAndUpdate({_id: req.params.id, ownerMail: req.user.email}, {shared: false}, (err, doc)=>{
-        if(err){
-            console.error(err);
-            return res.send(500, { error: err });
-        }
-
-        console.log(doc);
-
-        //doc.images
-
-
-        var batch = new Batchelor({
-            'uri':'https://www.googleapis.com/batch',
-            'method':'POST',
-            'auth': {
-                'bearer': [req.user.accessToken]
-            },
-            'headers': {
-                'Content-Type': 'multipart/mixed'
-            }
-        });
-
-
-
-        doc.images.forEach((image) => {
-            console.log(image.position);
-            batch.add({
-                'method': 'DELETE',
-                'path': '/drive/v3/files/'+image.id+'/permissions/anyoneWithLink',
-                'parameters':{
-                    'Content-Type':'application/json;',
-                    'body':{
-                        
-                    }
+    Album.findOne({_id: req.params.id, ownerMail: req.user.email}, (err1, doc)=>{
+        Album.find( {ownerMail: req.user.email}, function (err2, albums) {
+            passportConfig.refreshAccessToken(req.user._id, accessToken => {
+                if (err1 || err2) {
+                    console.error(err1 + err2);
+                    res.render('creation/creations', {
+                        albums: albums,
+                        errormsg: "Could not share Presentation " + req.params.id + " successfully!"
+                    });
                 }
+
+                console.log(doc);
+
+                //doc.images
+
+
+                var batch = new Batchelor({
+                    'uri': 'https://www.googleapis.com/batch',
+                    'method': 'POST',
+                    'auth': {
+                        'bearer': [accessToken]
+                    },
+                    'headers': {
+                        'Content-Type': 'multipart/mixed'
+                    }
+                });
+
+
+                doc.images.forEach((image) => {
+                    console.log(image.position);
+                    batch.add({
+                        'method': 'DELETE',
+                        'path': '/drive/v3/files/' + image.id + '/permissions/anyoneWithLink',
+                        'parameters': {
+                            'Content-Type': 'application/json;',
+                            'body': {}
+                        }
+                    });
+                });
+
+                batch.run(function (err, response) {
+                    console.log(response);
+                    if (err) {
+                        console.error("Error: " + err);
+                    }
+
+                    var noErrors = response.parts.every((part) => {
+                        if (part.statusCode != '204' && part.statusCode != '404') {
+                            //404 in this case means, that the image in question is currently not shared by
+                            //sharelink. This can e.g. occur, when an image is used in multiple Presentations, and one
+                            //of those is unshared
+                            console.error("ERROR CODE IN RESPONSE: \n" + part);
+                            res.render('creation/creations', {
+                                albums: albums,
+                                errormsg: "Could not unshare Presentation " + req.params.id + " successfully! Maybe you do not posess the necessary rights for the files on Google Drive?"
+                            });
+                            return false;
+                        }
+                        return true;
+                    });
+                    if (noErrors) {
+                        Album.findOneAndUpdate({
+                            _id: req.params.id,
+                            ownerMail: req.user.email
+                        }, {shared: false}, (err, doc) => {
+                            albums.find(album => {return album._id == req.params.id}).shared = false;
+                            res.render('creation/creations', {
+                                albums: albums,
+                                successmsg: "Presentation " + req.params.id + " unshared successfully."
+                            });
+                        });
+                    }
+                });
             });
         });
-
-        batch.run(function(err, response){
-            console.log(response);
-            if (err){
-                console.error("Error: " + err);
-            }
-        });
-
-
-        return res.redirect("/creations");
     });
-
 };

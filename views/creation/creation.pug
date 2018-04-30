@@ -25,12 +25,14 @@ block content
       div(id='map' style='height: 80vh;')
     div(class="row")
       div(class="col-sm-8")
-      div(class="col-sm-1 pull-right")
+      div(class="col-sm-3 pull-right")
         //button(id="updateLocButton" class="btn btn-default" onclick="updateLocationsGoogleDrive()" disabled="true")
           span(class="glyphicon glyphicon-cloud-upload")
             |Update image locations on Google Drive
         //a(href='/play/'+album._id)
-        button(id="playbutton" class="btn btn-link" onclick="window.location.href='/play/"+album._id+"'")
+        button(class="btn btn-link playablebutton" onclick="window.location.href='/creations'")
+          span(class="glyphicon glyphicon-floppy-disk" style="font-size:3em;")
+        button(class="btn btn-link playablebutton" onclick="window.location.href='/play/"+album._id+"'")
           span(class="glyphicon glyphicon-play-circle" style="font-size:3em;")
   div(class="col-sm-4 pre-scrollable" style="height: 100vh;")
     //button(onclick='test()')
@@ -119,11 +121,11 @@ block content
         album.playable = playable;
         if(playable){
             console.log("disabled = false");
-            document.getElementById("playbutton").disabled=false;
+            $(".playablebutton").prop('disabled', false);
         }
         else {
             console.log("disabled = true");
-            document.getElementById("playbutton").disabled=true;
+            $(".playablebutton").prop('disabled', true);
         }
         //Clear out previous marker Clusterers
         //if(markerCluster){
@@ -193,11 +195,11 @@ block content
             album.playable = playable;
             if (playable) {
                 console.log("disabled = false");
-                document.getElementById("playbutton").disabled = false;
+                $(".playablebutton").prop('disabled', true);
             }
             else {
                 console.log("disabled = true");
-                document.getElementById("playbutton").disabled = true;
+                $(".playablebutton").prop('disabled', true);
             }
             resetPath();
             addImagesToMap();
@@ -221,15 +223,15 @@ block content
             if(!(image.lat && image.lng)){
                 playable=false;
             }
-        })
+        });
         album.playable=playable;
         if (playable) {  //TODO extract to function
             console.log("disabled = false");
-            document.getElementById("playbutton").disabled = false;
+            $(".playablebutton").prop('disabled', true);
         }
         else {
             console.log("disabled = true");
-            document.getElementById("playbutton").disabled = true;
+            $(".playablebutton").prop('disabled', true);
         }
 
 
@@ -326,6 +328,12 @@ block content
             .show()
             .focus();
     });
+
+
+    document.getElementById('titleTextBox').addEventListener('keyup', function (e) {
+        if (e.which == 13) this.blur();
+    });
+
 
     $('.blur').blur(function () {
         "use strict";
