@@ -245,7 +245,7 @@ block content
 
     var idsInOrder = [];
     function sortArrayWithComparatorArray(a, b) {
-        return idsInOrder.indexOf(a._id) - idsInOrder.indexOf(b._id);
+        return idsInOrder.indexOf(a.filename) - idsInOrder.indexOf(b.filename);
     }
     var sortAndUpdateMap = function () {
         //var idsInOrder = $("#sortable").sortable("refreshPositions").children();
@@ -253,15 +253,15 @@ block content
         idsInOrder = $("#sortable").sortable("toArray");
 
         //This part just changes the markers around, but they actually dont even have to be moved
-        //console.log("markers before:");
-        //console.log(markers);
-        //markers.sort(sortArrayWithComparatorArray);
-        //console.log("markers after:");
-        //console.log(markers);
+        console.log("images before:");
+        console.log(idsInOrder);
+        album.images.sort(sortArrayWithComparatorArray);
+        console.log("images after:");
+        console.log(idsInOrder);
 
         //console.log("locations: ");
         //console.log(album.images);
-        album.images.sort(sortArrayWithComparatorArray);
+        //album.images.sort(sortArrayWithComparatorArray);
         //console.log(album.images);
         var map = travelpath.getMap();
         travelpath.setMap(null);
