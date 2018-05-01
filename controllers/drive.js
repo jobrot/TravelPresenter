@@ -182,7 +182,7 @@ function downloadMetadataAndCreateAlbum (auth, pickerresults, ownerMail, res) {
         console.log(album);
         res.render('creation/creation', {
             album: album,
-            warning: errors
+            warning: "Some of the images you provided have no geographic location. They have been marked in yellow. Pin them manually to add them to the presentation." + errors
         });
 
 

@@ -1,16 +1,6 @@
 extends ../layout
 
 block content
-  div(id="alert")
-    if successmsg
-        .alert.alert-success.fade.in
-            div=successmsg
-    if warningmsg
-        .alert.alert-warning.fade.in
-            div=warningmsg
-    if errormsg
-        .alert.alert-danger.fade.in
-            div=errormsg
 
   h3 Your Creations
 
@@ -100,4 +90,4 @@ block content
       }
 
       //Removing Alerts
-      $("#alert").ready().delay(10000).fadeOut();
+      //$("#alert").ready().delay(10000).fadeOut();

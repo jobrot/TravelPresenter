@@ -2,16 +2,6 @@ extends ../layout
 
 block content
 
-  if warning
-    div(id="warning")
-        .alert.alert-warning.fade.in
-            div Some of the images you provided have no geographic location. They have been marked in yellow. Pin them manually to add them to the presentation.
-            div=warning
-  if album.images.length < 1
-    .alert.alert-danger.fade.in
-      div It seems that there are no Images in your album, possibly because there were no GPS locations present in your Images. To choose different Images,
-        a(href='/drive/images') click here.
-
   .row
       .col-sm-8
         .row
@@ -353,8 +343,7 @@ block content
         persistCreation(album);
     });
 
-    //Removing Warnings
-    $("#warning").ready().delay(10000).fadeOut();
+
   script(type='text/javascript' src='https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js' )
   //TODO Client API Key has to be Restricted after development is finished
   script(type='text/javascript' src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBu_4PKulFGlZtAB10E-ekucVFzm2KzSxk&callback=initMap")

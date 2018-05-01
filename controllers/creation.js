@@ -189,12 +189,12 @@ exports.deleteCreation = (req, res) => {
                 console.error(err1 + err2);
                 res.render('creation/creations', {
                     albums: albums,
-                    errormsg: "Could not remove Presentation "+req.params.id+"!"
+                    error: "Could not remove Presentation "+req.params.id+"!"
                 });
             }
             res.render('creation/creations', {
                 albums: albums,
-                successmsg: "Presentation "+req.params.id+" removed successfully."
+                success: "Presentation "+req.params.id+" removed successfully."
             });
         });
     });
@@ -216,7 +216,7 @@ exports.shareCreation = (req, res) => {
                 console.error(err1 + err2);
                 res.render('creation/creations', {
                     albums: albums,
-                    errormsg: "Could not share Presentation "+req.params.id+" successfully!"
+                    error: "Could not share Presentation "+req.params.id+" successfully!"
                 });
             }
 
@@ -260,7 +260,7 @@ exports.shareCreation = (req, res) => {
                         console.error("Error: " + err);
                         res.render('creation/creations', {
                             albums: albums,
-                            errormsg: "Could not share Presentation "+req.params.id+" successfully!"
+                            error: "Could not share Presentation "+req.params.id+" successfully!"
                         });
                     }
 
@@ -269,7 +269,7 @@ exports.shareCreation = (req, res) => {
                             console.error("ERROR CODE IN RESPONSE: \n" + part);
                             res.render('creation/creations', {
                                 albums: albums,
-                                errormsg: "Could not share Presentation "+req.params.id+" successfully! Maybe you do not posess the necessary rights for the files on Google Drive?"
+                                error: "Could not share Presentation "+req.params.id+" successfully! Maybe you do not posess the necessary rights for the files on Google Drive?"
                             });
                             return false;
                         }
@@ -283,7 +283,7 @@ exports.shareCreation = (req, res) => {
                             albums.find(album => {return album._id == req.params.id}).shared = true;
                             res.render('creation/creations', {
                                 albums: albums, //Veraltete version von albums
-                                successmsg: "Presentation " + req.params.id + " shared successfully.\nThe sharelink was copied to your Clipboard."
+                                success: "Presentation " + req.params.id + " shared successfully.\nThe sharelink was copied to your Clipboard."
                             });
                         });
                     }
@@ -310,7 +310,7 @@ exports.unshareCreation = (req, res) => {
                     console.error(err1 + err2);
                     res.render('creation/creations', {
                         albums: albums,
-                        errormsg: "Could not share Presentation " + req.params.id + " successfully!"
+                        error: "Could not share Presentation " + req.params.id + " successfully!"
                     });
                 }
 
@@ -357,7 +357,7 @@ exports.unshareCreation = (req, res) => {
                             console.error("ERROR CODE IN RESPONSE: \n" + part);
                             res.render('creation/creations', {
                                 albums: albums,
-                                errormsg: "Could not unshare Presentation " + req.params.id + " successfully! Maybe you do not posess the necessary rights for the files on Google Drive?"
+                                error: "Could not unshare Presentation " + req.params.id + " successfully! Maybe you do not posess the necessary rights for the files on Google Drive?"
                             });
                             return false;
                         }
@@ -371,7 +371,7 @@ exports.unshareCreation = (req, res) => {
                             albums.find(album => {return album._id == req.params.id}).shared = false;
                             res.render('creation/creations', {
                                 albums: albums,
-                                successmsg: "Presentation " + req.params.id + " unshared successfully."
+                                success: "Presentation " + req.params.id + " unshared successfully."
                             });
                         });
                     }
