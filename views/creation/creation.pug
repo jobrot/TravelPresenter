@@ -12,46 +12,49 @@ block content
       div It seems that there are no Images in your album, possibly because there were no GPS locations present in your Images. To choose different Images,
         a(href='/drive/images') click here.
 
-  h3
-    span(class="label label-default editableTitle" for="titleTextBox")
-        if album.title
-            span #{album.title}
-        else
-            span Click to Add Text
-  input(value="" type="text" style="padding-down:10px;" id="titleTextBox" name="titleTextBox" class="blur" hidden)
+  .row
+      .col-sm-8
+        .row
+          .col-sm-8
+            h4
+                span(class="label label-default editableTitle" for="titleTextBox")
+                  if album.title
+                      span #{album.title}
+                  else
+                      span Click to Add Text
+                input(value="" type="text" style="padding-down:10px;" id="titleTextBox" name="titleTextBox" class="blur" hidden)
+          .col-sm-4
+              //button(id="updateLocButton" class="btn btn-default" onclick="updateLocationsGoogleDrive()" disabled="true")
+                span(class="glyphicon glyphicon-cloud-upload")
+                  |Update image locations on Google Drive
+              button(class="btn btn-link playablebutton pull-right" onclick="window.location.href='/play/" + album._id + "'")
+                  span(class="glyphicon glyphicon-play-circle" style="font-size:2em;")
+              button(class="btn btn-link pull-right" onclick="window.location.href='/creations'")
+                  span(class="glyphicon glyphicon-floppy-disk" style="font-size:2em;")
 
-  div(class="col-sm-8")
-    div(class="row" style="padding-up:10px;")
-      div(id='map' style='height: 80vh;')
-    div(class="row")
-      div(class="col-sm-8")
-      div(class="col-sm-3 pull-right")
-        //button(id="updateLocButton" class="btn btn-default" onclick="updateLocationsGoogleDrive()" disabled="true")
-          span(class="glyphicon glyphicon-cloud-upload")
-            |Update image locations on Google Drive
-        //a(href='/play/'+album._id)
-        button(class="btn btn-link playablebutton" onclick="window.location.href='/creations'")
-          span(class="glyphicon glyphicon-floppy-disk" style="font-size:3em;")
-        button(class="btn btn-link playablebutton" onclick="window.location.href='/play/"+album._id+"'")
-          span(class="glyphicon glyphicon-play-circle" style="font-size:3em;")
-  div(class="col-sm-4 pre-scrollable" style="height: 100vh;")
-    //button(onclick='test()')
-    //class="list-group"
-    ol(id="sortable" )
-      - var n = 0
-      - var labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      while n<album.images.length
-        - var image = album.images[n]
 
-        li(class="list-group-item" id=image.filename)
-          .figure
-            .figcaption.text-center #{labels[n % labels.length]} #{album.title}
-            - n++
-            img(src="data:image/jpeg;base64, "+image.thumbnail.toString('base64') style="max-width:100%;max-height:100%;")
-          button(class="btn btn-default" style="margin:5px" onClick="setNewMarker('"+image.filename+"')")
-            span(class="glyphicon glyphicon-pushpin")
-          button(class="btn btn-default" style="margin:5px" onClick="removeFileFromAlbum('"+image.filename+"')")
-            span(class="glyphicon glyphicon-remove")
+        div(class="row" style="padding-up:10px;")
+           div(id='map' style='height: 65vh;')
+      div(class="col-sm-4" style="min-height: 75vh")
+          div(class="pre-scrollable" style="min-height: 75vh")
+            ol(id="sortable")
+              - var n = 0
+              - var labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+              while n<album.images.length
+                - var image = album.images[n]
+
+                li(class="list-group-item text-center" id=image.filename)
+                  .figure
+                    .figcaption
+                       b (#{labels[n % labels.length]})
+                       | #{image.filename}
+                    - n++
+                    img(src="data:image/jpeg;base64, "+image.thumbnail.toString('base64') style="max-width:100%;max-height:100%;")
+
+                  button(class="btn btn-default" style="margin:5px" onClick="setNewMarker('"+image.filename+"')")
+                      span(class="glyphicon glyphicon-pushpin")
+                  button(class="btn btn-default" style="margin:5px" onClick="removeFileFromAlbum('"+image.filename+"')")
+                      span(class="glyphicon glyphicon-remove")
 
 
   script(type='text/javascript').
@@ -333,7 +336,9 @@ block content
     document.getElementById('titleTextBox').addEventListener('keyup', function (e) {
         if (e.which == 13) this.blur();
     });
-
+    $( document ).ready(function() {
+        $('.pre-scrollable').slimScroll({height: '75vh'});
+    });
 
     $('.blur').blur(function () {
         "use strict";
@@ -353,3 +358,4 @@ block content
   script(type='text/javascript' src='https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js' )
   //TODO Client API Key has to be Restricted after development is finished
   script(type='text/javascript' src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBu_4PKulFGlZtAB10E-ekucVFzm2KzSxk&callback=initMap")
+  script(type='text/javascript' src="http://rawgithub.com/rochal/jQuery-slimScroll/master/jquery.slimscroll.js")

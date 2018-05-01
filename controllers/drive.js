@@ -101,8 +101,8 @@ function downloadMetadataAndCreateAlbum (auth, pickerresults, ownerMail, res) {
         response.parts.forEach( (part, index) => {
             promises.push(new Promise(function(resolve, reject) {
                 var metadata = part.body;
-                //console.log("metadata:");
-                //console.log(metadata);
+                console.log("metadata:");
+                console.log(metadata);
                 //metadata = JSON.parse(metadata);
                 if (part.statusCode != '200') {
                     console.error("ERROR CODE IN RESPONSE: \n" + metadata);
@@ -121,7 +121,8 @@ function downloadMetadataAndCreateAlbum (auth, pickerresults, ownerMail, res) {
                         image.lat = metadata.imageMediaMetadata.location.latitude;
                         image.lng = metadata.imageMediaMetadata.location.longitude;
                     }
-                    image.createdTime = metadata.createdTime;
+                    //Converting from Google Format (2017:09:29 11:04:42) to ISO Date 2017-09-29T11:04:42Z
+                    image.createdTime = new Date(metadata.imageMediaMetadata.time.replace(":","-").replace(":","-").replace(" ","T")+"Z");
 
 
                     if (metadata.thumbnailLink) {
@@ -154,6 +155,10 @@ function downloadMetadataAndCreateAlbum (auth, pickerresults, ownerMail, res) {
     });
 
     Promise.all(promises).then(function(data) {
+
+        album.images.sort((a,b) => {
+            return b.createdTime-a.createdTime;
+        });
         album.ownerMail = ownerMail;
         album.save();
         //res.redirect('/creation/'+album._id);
