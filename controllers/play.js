@@ -8,8 +8,8 @@ const passportConfig = require('../config/passport');
  */
 exports.getPlay = (req, res) => {
   //query all locations and give them to the rendering function
-  console.log("HierParams");
-  console.log(req);
+  //console.log("HierParams");
+  //console.log(req);
 
   //if email exists in req, it is used, otherwise a dash is used
   var mail ="-";
