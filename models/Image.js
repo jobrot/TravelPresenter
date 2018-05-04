@@ -7,6 +7,7 @@ const imageSchema = new mongoose.Schema({
     position: Number,
     lat: Number,
     lng: Number,
+    rotation: Number,
     thumbnail: String,
     thumbnailLink: String,
     createdTime: Date

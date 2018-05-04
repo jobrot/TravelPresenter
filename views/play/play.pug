@@ -113,12 +113,15 @@ block content
 
                 modal.style.display = "block";
                 modalImg.style.display = "block";
+                // modalImg.style.imageOrientation = "from-image";  This would be the solution to Rotation issues, but only implemented in Firefox
 
                 sleepAndSetTimeoutId(IMAGE_SHOW_LENGTH).then(()=>{
                     modal.style.display = "none";
                     modalImg.style.display = "none";
                     if(locs[PRELOAD_IMG_COUNT-1]){
                         modalImg.src = "https://drive.google.com/uc?export=view&id="+locs[PRELOAD_IMG_COUNT-1].id; //TODO evtl bei parametern herumspielen zwecks drehung
+                        modalImg.style.transform = "rotate("+locs[PRELOAD_IMG_COUNT-1].rotation*90+"deg)";
+
                         console.log("modalimg src is now: "+modalImg.src)
                     }
 
@@ -160,6 +163,7 @@ block content
                 var img = document.getElementById("img"+i);
                 if(img && locs[i]){
                     img.src = "https://drive.google.com/uc?export=view&id="+locs[i].id;
+                    img.style.transform = "rotate(" + locs[i].rotation * 90 + "deg)";
                 }
                 else console.error("No image found at Index "+i+", expected "+ PRELOAD_IMG_COUNT);
             }
@@ -221,6 +225,8 @@ block content
         function deg2rad(deg) {
             return deg * (Math.PI / 180)
         }
+
+
 
         $(window).on('load',function(){
             $('#msModal').modal('show');

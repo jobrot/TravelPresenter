@@ -120,6 +120,7 @@ function downloadMetadataAndCreateAlbum (auth, pickerresults, ownerMail, res) {
                     else{
                         image.lat = metadata.imageMediaMetadata.location.latitude;
                         image.lng = metadata.imageMediaMetadata.location.longitude;
+                        image.rotation = metadata.imageMediaMetadata.rotation;
                     }
                     //Converting from Google Format (2017:09:29 11:04:42) to ISO Date 2017-09-29T11:04:42Z
                     image.createdTime = new Date(metadata.imageMediaMetadata.time.replace(":","-").replace(":","-").replace(" ","T")+"Z");
