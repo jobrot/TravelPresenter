@@ -14,9 +14,6 @@ block content
                       span Click to Add Text
                 input(value="" type="text" style="padding-down:10px;" id="titleTextBox" name="titleTextBox" class="blur" hidden)
           .col-sm-4
-              //button(id="updateLocButton" class="btn btn-default" onclick="updateLocationsGoogleDrive()" disabled="true")
-                span(class="glyphicon glyphicon-cloud-upload")
-                  |Update image locations on Google Drive
               button(class="btn btn-link playablebutton pull-right" onclick="window.location.href='/play/" + album._id + "'")
                   span(class="glyphicon glyphicon-play-circle" style="font-size:2em;")
               button(class="btn btn-link pull-right" onclick="window.location.href='/creations'")
@@ -88,9 +85,13 @@ block content
 
         console.log(album.images);
 
-        if(markerCluster){
+        if(markerCluster){ //TODO remove
             markerCluster.clearMarkers();
         }
+
+        markers.forEach(marker =>{
+            marker.setMap(null);
+        });
 
         markers = [];
         var playable = true;

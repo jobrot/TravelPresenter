@@ -8,88 +8,44 @@ block content
 
     script(type='text/javascript').
         //The Browser API key obtained from the Google API Console.
+        //This is allowed to be in Frontend js, as it must be exposed to the user, and is
+        // restricted via origin policy on the api side
         var developerKey = 'AIzaSyBu_4PKulFGlZtAB10E-ekucVFzm2KzSxk';
 
         console.log("in images js");
 
-        // The Client ID obtained from the Google API Console.
-        //var clientId = '569072057508-jprgcdgfk6lcs2g4m0ieqftsrniuin5d.apps.googleusercontent.com'
-
-        // Scope to use to access user's photos. TODO wenn ich das ändere, auch im play.pug ändern bzw. als umgebungsvariablen setzen
-        //var scope = ['https://www.googleapis.com/auth/drive.photos.readonly']; //https://www.googleapis.com/auth/photos  https://www.googleapis.com/auth/drive.readonly    https://www.googleapis.com/auth/drive.photos.readonly	View the photos, videos and albums in your Google Photos
-
-        var pickerApiLoaded = false; //TODO nach entwicklung entfernen
         var oauthToken ='#{accessToken}';
 
         // Use the API Loader script to load google.picker and gapi.auth.
         function onApiLoad() {
-            console.log("onApiLoad called");
-            //gapi.load('auth', {'callback': onAuthApiLoad});
-            gapi.load('picker', {'callback': onPickerApiLoad});
+            gapi.load('picker', {'callback': createPicker});
         }
-
-
-        /*
-        function onAuthApiLoad() {
-            console.log("onAuthApiLoad called");
-            window.gapi.auth.authorize(
-                {
-                    'client_id': clientId,
-                    'scope': scope,
-                    'immediate': false
-                },
-                handleAuthResult);
-        }*/
-
-        function onPickerApiLoad() {
-            console.log("onPickerApiLoad called");
-            pickerApiLoaded = true;
-            createPicker();
-        }
-
-
-        /*
-        function handleAuthResult(authResult) {
-            console.log("handleAuthResult called");
-            console.log(authResult);
-            if (authResult && !authResult.error) {
-                oauthToken = authResult.access_token;
-                createPicker();
-            }
-        }*/
 
         // Create and render a Picker object for picking user Photos.
         function createPicker() {
-            console.log("createPicker called");
-            if (pickerApiLoaded && oauthToken) {  //google.picker.ViewId.PHOTOS  --> all photos in their albums        DOCS_IMAGES --> all photos in gdrive
-                var picker = new google.picker.PickerBuilder().addView(google.picker.ViewId.DOCS_IMAGES)
-                    .setOAuthToken(oauthToken)
-                    .setDeveloperKey(developerKey)
-                    .setTitle("Select the Images you want to add to your Presentation")
-                    // https://developers.google.com/picker/docs/reference#DocsViewMode
-                    .enableFeature(google.picker.Feature.MULTISELECT_ENABLED).setCallback(pickerCallback).build();
-                picker.setVisible(true);
-            }
-            else console.log("Picker api not loaded or auth token not present")
+             //google.picker.ViewId.PHOTOS  --> all photos in their albums        DOCS_IMAGES --> all photos in gdrive
+            var picker = new google.picker.PickerBuilder().addView(google.picker.ViewId.DOCS_IMAGES)
+                .setOAuthToken(oauthToken)
+                .setDeveloperKey(developerKey)
+                .setTitle("Select the Images you want to add to your Presentation")
+                .enableFeature(google.picker.Feature.MULTISELECT_ENABLED).setCallback(pickerCallback).build();
+            picker.setVisible(true);
         }
 
-        // A simple callback implementation.
+        // A simple callback implementation, that gets fed with the results of the users picker selections
         function pickerCallback(data) {
             if (data[google.picker.Response.ACTION] == google.picker.Action.PICKED) {
                 var docs = data[google.picker.Response.DOCUMENTS];
                 var ids = [];
                 for (i = 0; i < docs.length; i++) {
-                    console.log(docs[i]);
                     ids.push(docs[i][google.picker.Document.ID]);
                 }
 
-
                 var form = document.forms[0];
-
                 var hiddenField = document.createElement("input");
                 hiddenField.setAttribute("type", "hidden");
                 hiddenField.setAttribute("name", "pickerresults");
-                hiddenField.setAttribute("value", ids); //data[google.picker.Response.DOCUMENTS][0]
+                hiddenField.setAttribute("value", ids);
                 form.appendChild(hiddenField);
                 
                 document.body.appendChild(form);
@@ -97,25 +53,4 @@ block content
             }
         }
 
-        function test () {
-            var form = document.forms[0];
-            //form.setAttribute("method", "post");
-            //form.setAttribute("action", "/drive/images");
-
-            var hiddenField = document.createElement("input");
-            hiddenField.setAttribute("type", "hidden");
-            hiddenField.setAttribute("name", "pickerresults");
-            hiddenField.setAttribute("value", "0BxQeRYeVlriBZDFFaDFqMkRGLVU"); //data[google.picker.Response.DOCUMENTS][0]
-            form.appendChild(hiddenField);
-
-            //    var csrfField = document.createElement("input");
-            //    csrfField.setAttribute("type", "hidden");
-            //    csrfField.setAttribute("name", "_csrf");
-            //    csrfField.setAttribute("value", '_csrf');
-            //    form.appendChild(csrfField);
-
-            document.body.appendChild(form);
-            form.submit();
-        }
-
-    script(type='text/javascript' src='https://apis.google.com/js/api.js?onload=onApiLoad')   //'https://apis.google.com/js/client.js?onload=onApiLoad') TEMPORÄÄÄÄR //https://apis.google.com/js/api.js?onload=onApiLoad
+    script(type='text/javascript' src='https://apis.google.com/js/api.js?onload=onApiLoad')

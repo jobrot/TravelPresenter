@@ -6,63 +6,63 @@ block content
 
   each album in albums
     .row
-      .panel.panel-default(style='background-color: #fff; height=100%')
-          .panel-body
-              .col-lg-4
-                img(src="data:image/jpeg;base64, "+album.images[0].thumbnail.toString('base64'), class='img-responsive')
-              .col-lg-4
-                  a(href='/creation/' + album._id, style='font-size:3em;')
-                      span(class='glyphicon glyphicon-edit').
-                      |&nbsp; #{album.title}
-              .col-lg-1
-                  if album.playable
-                    button(class="btn btn-link" onclick="window.location.href='/play/" + album._id + "'")
-                      span(class="glyphicon glyphicon-play-circle" style="font-size:3em;" data-toggle="tooltip" data-placement="top"
-                      title="Play the Presentation")
-                  else
-                    button(class="btn btn-link" onclick="window.location.href='/play/" + album._id + "'" disabled)
-                      span(class="glyphicon glyphicon-play-circle" style="font-size:3em;" data-toggle="tooltip"
-                      title="The album can´t be played as some Images do not possess a proper GPS-tag.")
+      .panel.panel-default.panel-body
+          .col-md-4
+            img(src="data:image/jpeg;base64, "+album.images[0].thumbnail.toString('base64'), class='img-responsive' style="margin: 0 auto")
+          .col-md-4
+              a(href='/creation/' + album._id, style='font-size:3em')
+                  span(class='glyphicon glyphicon-edit').
+                  |&nbsp; #{album.title}
+          .col-xs-3.col-md-1
+              if album.playable
+                button(class="btn btn-link" onclick="window.location.href='/play/" + album._id + "'")
+                  span(class="glyphicon glyphicon-play-circle" style="font-size:3em" data-toggle="tooltip" data-placement="top"
+                  title="Play the Presentation")
+              else
+                button(class="btn btn-link" onclick="window.location.href='/play/" + album._id + "'" disabled)
+                  span(class="glyphicon glyphicon-play-circle" style="font-size:3em" data-toggle="tooltip"
+                  title="The album can´t be played as some Images do not possess a proper GPS-tag.")
 
-              .col-lg-1
-                  if album.playable != true
-                      button(class="btn btn-link text-error" disabled)
-                          span(class="glyphicon glyphicon-share text-error" style="font-size:3em; background:none; border:none" data-toggle="tooltip" data-placement="top"
-                          title="The album can´t be shared as some Images do not possess a proper GPS-tag.")
-                  else if album.shared
-                      button(class="btn btn-link" onClick="copyToClipboardAndUpdateTooltips('"+album._id+"')")
-                          span(id="share"+album._id class="glyphicon glyphicon-share text-success" style="font-size:3em; background:none; border:none" data-toggle="tooltip"
-                            title="Click to copy the Sharelink to clipboard")
-                  else
-                    form(action='/creation/share/' + album._id, method="POST", style="display: inline;")
-                      input(type='hidden', name='_csrf', value=_csrf)
-                      button(type="submit" value="submit" class="btn btn-link" style="background:none; border:none" onClick="copyToClipboardWithCurrentHref('"+album._id+"')")
-                        span(class="glyphicon glyphicon-share" style="font-size:3em;" data-toggle="tooltip" data-placement="top"
-                        title="Share the Album publicly")
-
-              .col-lg-1
-                  if album.shared != true
-                      button(class="btn btn-link text-error" disabled)
-                          span(class="glyphicon glyphicon-ban-circle text-error" style="font-size:3em; background:none; border:none" data-toggle="tooltip" data-placement="top"
-                          title="The album can´t be unshared as it is not shared")
-                  else
-                      form(action='/creation/unshare/' + album._id, method="POST", style="display: inline;")
-                          input(type='hidden', name='_csrf', value=_csrf)
-                          button(type="submit" value="submit" class="btn btn-link" style="background:none; border:none")
-                              span(class="glyphicon glyphicon-ban-circle" style="font-size:3em;" data-toggle="tooltip"
-                              title="Unshare this album and all of its Images")
-
-
-              .col-lg-1
-                form(action='/creation/delete/' + album._id, method="POST", style="display: inline;")
+          .col-xs-3.col-md-1
+              if album.playable != true
+                  button(class="btn btn-link text-error" disabled)
+                      span(class="glyphicon glyphicon-share text-error" style="font-size:3em" data-toggle="tooltip" data-placement="top"
+                      title="The album can´t be shared as some Images do not possess a proper GPS-tag.")
+              else if album.shared
+                  button(class="btn btn-link" onClick="copyToClipboardAndUpdateTooltips('"+album._id+"')")
+                      span(id="share"+album._id class="glyphicon glyphicon-share text-success" style="font-size:3em;" data-toggle="tooltip"
+                        title="Click to copy the Sharelink to clipboard")
+              else
+                form(action='/creation/share/' + album._id, method="POST", style="display: inline;")
                   input(type='hidden', name='_csrf', value=_csrf)
-                  button(type="submit" value="submit" class="glyphicon glyphicon-remove button pull-right" style="font-size:3em; background:none; border:none" data-toggle="tooltip" data-placement="top"
-                  title="Delete Album")
+                  button(type="submit" value="submit" class="btn btn-link" onClick="copyToClipboardWithCurrentHref('"+album._id+"')")
+                    span(class="glyphicon glyphicon-share" style="font-size:3em" data-toggle="tooltip" data-placement="top"
+                    title="Share the Album publicly")
+
+          .col-xs-3.col-md-1
+              if album.shared != true
+                  button(class="btn btn-link text-error" disabled)
+                      span(class="glyphicon glyphicon-ban-circle text-error" style="font-size:3em" data-toggle="tooltip" data-placement="top"
+                      title="The album can´t be unshared as it is not shared")
+              else
+                  form(action='/creation/unshare/' + album._id, method="POST", style="display: inline;")
+                      input(type='hidden', name='_csrf', value=_csrf)
+                      button(type="submit" value="submit" class="btn btn-link")
+                          span(class="glyphicon glyphicon-ban-circle" style="font-size:3em" data-toggle="tooltip"
+                          title="Unshare this album and all of its Images")
+
+
+          .col-xs-3.col-md-1
+            form(action='/creation/delete/' + album._id, method="POST", style="display: inline;")
+              input(type='hidden', name='_csrf', value=_csrf)
+              button(type="submit" value="submit" class="btn" style="box-shadow: none; background:none;")
+                span(type="submit" value="submit" class="glyphicon glyphicon-remove" style="font-size:3em" data-toggle="tooltip" data-placement="top"
+                title="Delete Album")
 
   .row
-        a(href='/drive/images', style='color: #1565c0')
-            button(class='btn btn-default btn-lg pull-right')
-                span(class='glyphicon glyphicon-plus')
+    a(href='/drive/images', style='color: #1565c0')
+        button(class='btn btn-default btn-lg pull-right')
+            span(class='glyphicon glyphicon-plus')
 
 
 
@@ -88,6 +88,3 @@ block content
               .tooltip("fixTitle")
               .tooltip("show");
       }
-
-      //Removing Alerts
-      //$("#alert").ready().delay(10000).fadeOut();
