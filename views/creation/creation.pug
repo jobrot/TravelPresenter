@@ -111,15 +111,7 @@ block content
                 playable = false;
             }
         });
-        album.playable = playable;
-        if(playable){
-            console.log("disabled = false");
-            $(".playablebutton").prop('disabled', false);
-        }
-        else {
-            console.log("disabled = true");
-            $(".playablebutton").prop('disabled', true);
-        }
+        updatePlayableUIElements(playable);
         //Clear out previous marker Clusterers
         //if(markerCluster){
         //    markerCluster.setMap(null);
@@ -128,12 +120,15 @@ block content
 
         console.log("markercount: "+markers.length);
         console.log(markers);
+
+        /*
         markerCluster = new MarkerClusterer(map, markers, {
             imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m',
             gridSize: '12'
-        });
+        });*/
 
         markers.forEach((marker) => {
+            marker.setMap(map);
             marker.addListener('dragend', function() {
                 album.images.forEach((image, index) => {
                     if(image.filename == marker._id){
@@ -185,15 +180,7 @@ block content
                     playable = false;
                 }
             });
-            album.playable = playable;
-            if (playable) {
-                console.log("disabled = false");
-                $(".playablebutton").prop('disabled', true);
-            }
-            else {
-                console.log("disabled = true");
-                $(".playablebutton").prop('disabled', true);
-            }
+            updatePlayableUIElements(playable);
             resetPath();
             addImagesToMap();
             google.maps.event.removeListener(listener);
@@ -217,15 +204,7 @@ block content
                 playable=false;
             }
         });
-        album.playable=playable;
-        if (playable) {  //TODO extract to function
-            console.log("disabled = false");
-            $(".playablebutton").prop('disabled', true);
-        }
-        else {
-            console.log("disabled = true");
-            $(".playablebutton").prop('disabled', true);
-        }
+        updatePlayableUIElements(playable);
 
 
         var element = document.getElementById(filename);
@@ -297,6 +276,19 @@ block content
         });
     }
 
+    function updatePlayableUIElements(playable){
+        album.playable = playable;
+        if (playable) {
+            console.log("disabled = false");
+            $(".playablebutton").prop('disabled', false);
+        }
+        else {
+            console.log("disabled = true");
+            $(".playablebutton").prop('disabled', true);
+        }
+    }
+
+
     function updateLocationsGoogleDrive() {
 
         $.ajax({
@@ -344,7 +336,7 @@ block content
     });
 
 
-  script(type='text/javascript' src='https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js' )
+  //script(type='text/javascript' src='https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js' )
   //TODO Client API Key has to be Restricted after development is finished
   script(type='text/javascript' src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBu_4PKulFGlZtAB10E-ekucVFzm2KzSxk&callback=initMap")
   script(type='text/javascript' src="http://rawgithub.com/rochal/jQuery-slimScroll/master/jquery.slimscroll.js")

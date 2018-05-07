@@ -23,7 +23,7 @@ block content
             .modal-footer
                 .text-center
                     button(class="btn btn-default" data-dismiss="modal" onclick='setShowLenghtAndStartAnimation()') Start
-      div(id='myModal' class='playmodal' style='display: block' onclick='console.log("timeoutID:" +currentTimeOut); console.log("timeout cleared: "+clearTimeout(currentTimeOut)); currentResolve();')
+      div(id='playmodal' class='playmodal' style='display: block' onclick='console.log("timeoutID:" +currentTimeOut); console.log("timeout cleared: "+clearTimeout(currentTimeOut)); currentResolve();')
           img(class='playmodal-content' id='img0' style='display: none')
           img(class='playmodal-content' id='img1' style='display: none')
           img(class='playmodal-content' id='img2' style='display: none')
@@ -40,7 +40,8 @@ block content
           console.log("initmap");
           map = new google.maps.Map(document.getElementById('map'), {
             zoom: 8,
-            center: locations[0]
+            center: locations[0],
+            maxZoom: 12
           });
 
           // Create an array of alphabetical characters used to label the markers.
@@ -52,13 +53,9 @@ block content
               label: labels[i % labels.length]
             });
           });
-          // Add a marker clusterer to manage the markers.
-          //var markerCluster = new MarkerClusterer(map, markers, {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m', gridSize: '10'});
           createPathfromLocations(locations).setMap(map);
 
           preloadImages(locations);
-          //panMapToAllLocations(map, locations, 0);
-
         }
 
         function setShowLenghtAndStartAnimation(){
@@ -69,7 +66,7 @@ block content
             else if(ms){
                 IMAGE_SHOW_LENGTH = ms;
             }
-            panMapToAllLocations(map, locations, 0)
+            panMapToAllLocations(map, locations, 0, 0);
         }
 
 
@@ -88,72 +85,64 @@ block content
         var locations = !{JSON.stringify(album.images)};
 
 
-        var STEPS = 50;
-        var STEPLENGTH= 20;
+        var MAXSTEPS = 50;
+        var MINSTEPS = 1;
+        var STEPLENGTH= 30;
+        var WAITATTARGETTIME = 1000;
         var PRELOAD_IMG_COUNT = 5;
         var IMAGE_SHOW_LENGTH = 3000;
 
 
 
 
-        function panMapToAllLocations(map, locs, i){  //Todo check before execution if
-            console.log("panto");
-            var modal = document.getElementById('myModal');
+        function panMapToAllLocations(map, locs, i, oldSteps){
+            var modal = document.getElementById('playmodal');
             var modalImg = document.getElementById("img"+i%PRELOAD_IMG_COUNT);
             console.log("currently panning to "+i);
-            //console.log("modal " + JSON.stringify(modal) + " modalimg: " + JSON.stringify(modalImg));
-            //modalImg.src = "https://drive.google.com/uc?export=view&id="+locs[0].id;
 
             console.log("Distance "+getDistanceFromLatLonInKm(locs[0].lat, locs[0].lng, locs[1].lat, locs[1].lng));
 
 
-            sleep(STEPLENGTH*STEPS).then(()=>{
+            sleep(STEPLENGTH*oldSteps).then(()=>{
                 //console.log(locs[0]);
                 //console.log("lat starting: "+ locs[0].lat + "  lng starting: " + locs[0].lng);
+                sleep(WAITATTARGETTIME).then(()=>{
+                    modal.style.display = "block";
+                    modalImg.style.display = "block";
+                    // modalImg.style.imageOrientation = "from-image";  This would be the solution to Rotation issues, but only implemented in Firefox
 
-                modal.style.display = "block";
-                modalImg.style.display = "block";
-                // modalImg.style.imageOrientation = "from-image";  This would be the solution to Rotation issues, but only implemented in Firefox
+                    sleepAndSetTimeoutId(IMAGE_SHOW_LENGTH).then(()=>{
+                        modal.style.display = "none";
+                        modalImg.style.display = "none";
+                        if(locs[PRELOAD_IMG_COUNT]){
+                            modalImg.src = "https://drive.google.com/uc?export=view&id="+locs[PRELOAD_IMG_COUNT].id;
+                            modalImg.style.transform = "rotate("+locs[PRELOAD_IMG_COUNT].rotation*90+"deg)";
 
-                sleepAndSetTimeoutId(IMAGE_SHOW_LENGTH).then(()=>{
-                    modal.style.display = "none";
-                    modalImg.style.display = "none";
-                    if(locs[PRELOAD_IMG_COUNT-1]){
-                        modalImg.src = "https://drive.google.com/uc?export=view&id="+locs[PRELOAD_IMG_COUNT-1].id; //TODO evtl bei parametern herumspielen zwecks drehung
-                        modalImg.style.transform = "rotate("+locs[PRELOAD_IMG_COUNT-1].rotation*90+"deg)";
+                            console.log("modalimg src is now: "+modalImg.src)
+                        }
 
-                        console.log("modalimg src is now: "+modalImg.src)
-                    }
+                        var bounds = new google.maps.LatLngBounds();
+                        bounds.extend({lat: locs[0].lat, lng: locs[0].lng});
+                        bounds.extend({lat: locs[1].lat, lng: locs[1].lng});
+                        map.fitBounds(bounds);
+                        var steps = calculateStepsAccordingToDistance(getDistanceFromLatLonInKm(locs[0].lat, locs[0].lng, locs[1].lat, locs[1].lng));
+                        console.log("steps:" + steps);
+                        slowPanTo(map, locs[1].lat, locs[1].lng, steps);
+                        locs.shift();
 
-                    var bounds = new google.maps.LatLngBounds();
-                    bounds.extend({lat: locs[0].lat, lng: locs[0].lng});
-                    bounds.extend({lat: locs[1].lat, lng: locs[1].lng});
-                    map.fitBounds(bounds);
-                    //setMapZoomAccordingToDistance(map, getDistanceFromLatLonInKm(locs[0].lat, locs[0].lng, locs[1].lat, locs[1].lng));
-                    slowPanTo(map, locs[1].lat, locs[1].lng, STEPS);
-                    locs.shift();
-
-
-                    //console.log("mymodal: ");
-                    //console.log(JSON.stringify($("#myModal")));
-                    //console.log("modalimg: ");
-                    //console.log(JSON.stringify($("#img01")));
-                    //$("#myModal").css("display","block");
-                    //$("#img01").src = "20140810_121150.jpg";
-
-                    if(locs.length != 1){
-                       panMapToAllLocations(map, locs, i+1);
-                    }
-                    else{
-                        sleep(STEPLENGTH*STEPS).then(() => {
-                            //Show the last image
-                            modalImg = document.getElementById("img" + (i + 1) % PRELOAD_IMG_COUNT);
-                            modal.style.display = "block";
-                            modalImg.style.display = "block";
-                        });
-                    }
+                        if(locs.length != 1){
+                           panMapToAllLocations(map, locs, i+1, steps);
+                        }
+                        else{
+                            sleep(STEPLENGTH*steps).then(() => {
+                                //Show the last image
+                                modalImg = document.getElementById("img" + (i + 1) % PRELOAD_IMG_COUNT);
+                                modal.style.display = "block";
+                                modalImg.style.display = "block";
+                            });
+                        }
+                    });
                 });
-
 
             });
         }
@@ -165,7 +154,6 @@ block content
                     img.src = "https://drive.google.com/uc?export=view&id="+locs[i].id;
                     img.style.transform = "rotate(" + locs[i].rotation * 90 + "deg)";
                 }
-                else console.error("No image found at Index "+i+", expected "+ PRELOAD_IMG_COUNT);
             }
         }
 
@@ -181,6 +169,7 @@ block content
         }
 
         function slowPanTo(map, goalLat, goalLong, steps) {
+                //console.log("slowpanto "+steps);
                 var curLat = map.getCenter().lat();
                 var curLng = map.getCenter().lng();
                 //console.log("curlat: "+curLat+ "  curlng: " +curLng);
@@ -190,20 +179,26 @@ block content
                 if(steps==1){
                     return;
                 }
-
-                sleep(STEPLENGTH).then(()=>{
-                   //console.log("stepping in: "+steps);
-                   slowPanTo(map, goalLat, goalLong, steps-1);
-                });
+                else{
+                    sleep(STEPLENGTH).then(()=>{
+                       //console.log("stepping in: "+steps);
+                       slowPanTo(map, goalLat, goalLong, steps-1);
+                    });
+                }
         }
 
-        function setMapZoomAccordingToDistance(map, dist) {
-            map.fitBounds()
-
-            if(dist < 1){
-                map.setZoom(11);
+        function calculateStepsAccordingToDistance(dist) {
+            //calculated using a logistical growth model, with the defined
+            //Maxsteps as the maximum of growth and the minSteps as starting value
+            //and and appropriate growth constant k
+            if(dist<1){
+                return 1;
             }
-            else map.setZoom(8);
+            var S=MAXSTEPS;
+            var a=MINSTEPS;
+            var k=0.004;
+
+            return Math.ceil((a*S)/(a+((S-a)*Math.pow(Math.E,(-S*k*dist)))));
 
         }
 
@@ -235,7 +230,7 @@ block content
             };
         });
 
-  script(type='text/javascript' src='https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js' )
+  //script(type='text/javascript' src='https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js' )
   //TODO Client API Key has to be Restricted after development is finished
   script(type='text/javascript' src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBu_4PKulFGlZtAB10E-ekucVFzm2KzSxk&callback=initMap" async defer)
   script(type='text/javascript' src='https://apis.google.com/js/client.js?onload=onApiLoad')

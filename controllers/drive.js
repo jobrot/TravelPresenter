@@ -114,8 +114,7 @@ function downloadMetadataAndCreateAlbum (auth, pickerresults, ownerMail, res) {
                     image.position = index;
                     image.filename = metadata.name;
                     if (!metadata.imageMediaMetadata || !metadata.imageMediaMetadata.location) {
-                        console.error("The image " + metadata.name + " does not posess geographic location!");
-                        errors.push("The image " + metadata.name + " does not posess geographic location!\n");
+                        errors.push(metadata.name);
                     }
                     else{
                         image.lat = metadata.imageMediaMetadata.location.latitude;
@@ -158,7 +157,7 @@ function downloadMetadataAndCreateAlbum (auth, pickerresults, ownerMail, res) {
     Promise.all(promises).then(function(data) {
 
         album.images.sort((a,b) => {
-            return b.createdTime-a.createdTime;
+            return a.createdTime-b.createdTime;
         });
         album.ownerMail = ownerMail;
         album.save();
@@ -183,7 +182,7 @@ function downloadMetadataAndCreateAlbum (auth, pickerresults, ownerMail, res) {
         console.log(album);
         res.render('creation/creation', {
             album: album,
-            warning: "Some of the images you provided have no geographic location. They have been marked in yellow. Pin them manually to add them to the presentation." + errors
+            warning: "The following Images you provided have no geographic location. They have been marked in yellow. Pin them manually to add them to the presentation." + errors
         });
 
 
