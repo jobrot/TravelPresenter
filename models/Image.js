@@ -4,7 +4,6 @@ const mongoose = require('mongoose');
 const imageSchema = new mongoose.Schema({
     filename: String,
     id: String,
-    position: Number,
     lat: Number,
     lng: Number,
     rotation: Number,

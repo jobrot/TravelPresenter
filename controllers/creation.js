@@ -21,12 +21,6 @@ exports.getCreation = (req, res) => {
         console.error("Album not found!");
         return res.status(404).send( { error: "Album not found!" });
     }
-    console.log(JSON.stringify(album));
-    album.images.sort((a,b) =>{
-      if(a.position<b.position) return -1;
-      else if (a.position>b.position) return 1;
-      else return 0;
-    });
 
     res.render('creation/creation', {
         album: album
@@ -125,7 +119,6 @@ exports.updateLocations = (req, res) => {
 
 
     req.body.album.images.forEach((image) => {
-        console.log(image.position);
         batch.add({
             'method': 'PATCH',
             'path': '/drive/v3/files/'+image.id,
@@ -230,7 +223,6 @@ exports.shareCreation = (req, res) => {
 
 
                 doc.images.forEach((image) => {
-                    console.log(image.position);
                     batch.add({
                         'method': 'POST',
                         'path': '/drive/v3/files/'+image.id+'/permissions',
@@ -323,7 +315,6 @@ exports.unshareCreation = (req, res) => {
 
 
                 doc.images.forEach((image) => {
-                    console.log(image.position);
                     batch.add({
                         'method': 'DELETE',
                         'path': '/drive/v3/files/' + image.id + '/permissions/anyoneWithLink',

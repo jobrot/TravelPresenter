@@ -219,7 +219,7 @@ block content
         travelpath.setMap(null);
         createPathfromLocations(album.images);
         travelpath.setMap(map);
-        updatePositionsPersistCreation(album);
+        persistCreation(album);
     }
 
 
@@ -239,16 +239,11 @@ block content
         console.log("images after:");
         console.log(idsInOrder);
 
-        //console.log("locations: ");
-        //console.log(album.images);
-        //album.images.sort(sortArrayWithComparatorArray);
-        //console.log(album.images);
         var map = travelpath.getMap();
         travelpath.setMap(null);
         createPathfromLocations(album.images);
         travelpath.setMap(map);
-        updatePositionsPersistCreation(album);
-        //TODO persistcreation muss alles durchgehen und ordnen, sowie das ganze album haben (jetzt ist hier nur locations)
+        persistCreation(album);
     }
 
 
@@ -257,14 +252,6 @@ block content
         stop: sortAndUpdateMap
     });
 
-    function updatePositionsPersistCreation(album) {
-
-        album.images.forEach((image, index) =>{
-           image.position = index;
-        });
-        persistCreation(album);
-
-    }
 
     function persistCreation(album){
         $.ajax({
