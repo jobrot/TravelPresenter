@@ -7,9 +7,7 @@ const passportConfig = require('../config/passport');
  * Play page.
  */
 exports.getPlay = (req, res) => {
-  //query all locations and give them to the rendering function
-  //console.log("HierParams");
-  //console.log(req);
+  //query all locations and pass them to the rendering function
 
   //if email exists in req, it is used, otherwise a dash is used
   var mail ="-";
@@ -44,30 +42,5 @@ exports.getPlay = (req, res) => {
     res.render('play/play', {
         album: album
     });
-
   });
-
 };
-
-
-/**
- * GET /
- * Play page of a shared album, publicly available.
- */
-/*
-exports.getSharedPlay = (req, res) => {
-    //query all locations and give them to the rendering function
-    Album.findOneAndUpdate({_id: req.params.id, shared: true}, (err, album) => {
-        if(err){
-            console.error(err);
-            return;
-        }
-
-        //console.log("accesstoken "+token);
-        res.render('play/play', {
-            album: album
-        });
-
-    });
-
-};*/

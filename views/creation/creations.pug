@@ -73,7 +73,7 @@ block content
       });
 
       function copyToClipboardWithCurrentHref(id) {
-          var copyText = window.location.href.split("/").slice(0,3).join("/")+"play/"+id;
+          var copyText = window.location.href.split("/").slice(0,3).join("/")+"/play/"+id;
           const el = document.createElement('textarea');
           el.value = copyText;
           document.body.appendChild(el);

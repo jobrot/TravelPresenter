@@ -1,11 +1,7 @@
 const passport = require('passport');
 const request = require('request');
-const LocalStrategy = require('passport-local').Strategy;
 const refresh = require('passport-oauth2-refresh');
 const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
-const OpenIDStrategy = require('passport-openid').Strategy;
-const OAuthStrategy = require('passport-oauth').OAuthStrategy;
-const OAuth2Strategy = require('passport-oauth').OAuth2Strategy;
 
 const User = require('../models/User');
 
@@ -20,41 +16,11 @@ passport.deserializeUser((id, done) => {
 });
 
 /**
- * Sign in using Email and Password.
- */
-passport.use(new LocalStrategy({ usernameField: 'email' }, (email, password, done) => {
-  User.findOne({ email: email.toLowerCase() }, (err, user) => {
-    if (err) { return done(err); }
-    if (!user) {
-      return done(null, false, { msg: `Email ${email} not found.` });
-    }
-    user.comparePassword(password, (err, isMatch) => {
-      if (err) { return done(err); }
-      if (isMatch) {
-        return done(null, user);
-      }
-      return done(null, false, { msg: 'Invalid email or password.' });
-    });
-  });
-}));
-
-/**
- * OAuth Strategy Overview
- *
- * - User is already logged in.
- *   - Check if there is an existing account with a provider id.
- *     - If there is, return an error message. (Account merging not supported)
- *     - Else link new OAuth account with currently logged-in user.
- * - User is not logged in.
- *   - Check if it's a returning user.
- *     - If returning user, sign in and we are done.
- *     - Else check if there is an existing account with user's email.
- *       - If there is, return an error message.
- *       - Else create a new account.
- */
-
-/**
  * Sign in with Google.
+ * in order to get a refreshToken for continuous access, we request
+ * the accessType: offline
+ * If the User is already created, we log him in via the Google api,
+ * otherwise, the user is created
  */
 
 var googleStrategy = new GoogleStrategy({
@@ -87,6 +53,7 @@ var googleStrategy = new GoogleStrategy({
             }
         });
     } else {
+        //create a new User
         User.findOne({ google: profile.id }, (err, existingUser) => {
             if (err) { return done(err); }
             if (existingUser) {
@@ -120,16 +87,13 @@ passport.use(googleStrategy);
 refresh.use(googleStrategy);
 
 /*
-  Refresh the access token using the refresh token
+  Refresh the access token using the refresh token that was
+  stored in the user due to accesType: offline
  */
 exports.refreshAccessToken = (id, callback) =>{
     User.findById(id, (err, user) => {
         if (err) { return done(err); }
-
-        refresh.requestNewAccessToken('google', user.refreshToken, function(err, accessToken, refreshToken) {
-
-
-            console.log("refreshedToken " + accessToken);
+        refresh.requestNewAccessToken('google', user.refreshToken, function(err, accessToken) {
             if (err) {console.log(err);}
             user.accessToken=accessToken;
             //user.refreshToken=refreshToken;
@@ -138,9 +102,7 @@ exports.refreshAccessToken = (id, callback) =>{
             });
             return callback(accessToken);
         });
-
     });
-
 };
 
 
@@ -154,17 +116,4 @@ exports.isAuthenticated = (req, res, next) => {
     return next();
   }
   res.redirect('/login');
-};
-
-/**
- * Authorization Required middleware.
- */
-exports.isAuthorized = (req, res, next) => {
-  const provider = req.path.split('/').slice(-1)[0];
-  const token = req.user.refreshToken;
-  if (token) {
-    next();
-  } else {
-    res.redirect(`/auth/${provider}`);
-  }
 };

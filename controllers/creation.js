@@ -42,21 +42,12 @@ exports.getCreation = (req, res) => {
  */
 exports.getCreations = (req, res) => {
     //query all locations and pass them to the rendering function
-    console.log(req.params);
     Album.find( {ownerMail: req.user.email}, function (err, albums) {
         if(err){
             console.error(err);
             return res.status(500).send( { error: err });
         }
-        console.log(JSON.stringify(albums));
-        // album.images.sort((a,b) =>{ //TODO evtl, aber wenn dann auch in den anderen funktionen
-        //     if(a.position<b.position) return -1;
-        //     else if (a.position>b.position) return 1;
-        //     else return 0;
-        // });
-
         res.render('creation/creations', {
-            //owner: req.user.name,
             albums: albums
         });
     });

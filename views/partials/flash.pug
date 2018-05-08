@@ -20,5 +20,5 @@ div(id="alert")
         i.fa.fa-times-circle-o
       div= success
 script(type="text/javascript").
-  //Removing Warnings
-  $("#alert").ready().delay(15000).fadeOut();
+  //Removing Warnings after 20 seconds if user does not click them away
+  $("#alert").ready().delay(20000).fadeOut();
