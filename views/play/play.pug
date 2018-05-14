@@ -2,232 +2,39 @@ extends ../layout
 
 block content
   unless error
-      div(id='map' style='height: 80vh;')
-      div(class='row')
+    div(id='map' style='height: 80vh;')
+    div(class='row')
 
-      div(id="msModal" class="modal fade" role="dialog")
-        .modal-dialog.modal-dialog-centered
-          .modal-content
-            .modal-header
-              h4 Define parameters of the Presentation
-            .modal-body
-              form-group
-                .row
-                    label(for="checkms" class="col-lg-8") Do you want to enable Autoplay?
-                    .col-lg-4
-                        input(class="form-control" type="checkbox" id="checkms")
-                div(class="row" style="margin-top:5px")
-                    label(for="inputms" class="col-lg-8") How long do you want Autoplay to pause? (in Milliseconds)
-                    .col-lg-4
-                        input(class="form-control" id="inputms" value="3000" disabled)
-            .modal-footer
-                .text-center
-                    button(class="btn btn-default" data-dismiss="modal" onclick='setShowLenghtAndStartAnimation()') Start
-      div(id='playmodal' class='playmodal' style='display: block' onclick='console.log("timeoutID:" +currentTimeOut); console.log("timeout cleared: "+clearTimeout(currentTimeOut)); currentResolve();')
-          img(class='playmodal-content' id='img0' style='display: none')
-          img(class='playmodal-content' id='img1' style='display: none')
-          img(class='playmodal-content' id='img2' style='display: none')
-          img(class='playmodal-content' id='img3' style='display: none')
-          img(class='playmodal-content' id='img4' style='display: none')
-      script(type='text/javascript').
-        var currentTimeOut; //Id of current Timeout, to enable user to skip it
-        var currentResolve;
-        var markers = [];
-        var travelpath;
-        var map;
-        function initMap() {
-          console.log("initmap");
-          map = new google.maps.Map(document.getElementById('map'), {
-            zoom: 8,
-            center: locations[0],
-            maxZoom: 12
-          });
-
-          // Create an array of alphabetical characters used to label the markers.
-          var labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-          markers = locations.map(function(location, i) {
-            return new google.maps.Marker({
-              _id: location._id,
-              position: location,
-              label: labels[i % labels.length]
-            });
-          });
-          createPathfromLocations(locations).setMap(map);
-
-          preloadImages(locations);
-        }
-
-        function setShowLenghtAndStartAnimation(){
-            var ms = document.getElementById("inputms").value;
-            if(!$('#checkms:checked').val()){
-                IMAGE_SHOW_LENGTH=99999999999;
-            }
-            else if(ms){
-                IMAGE_SHOW_LENGTH = ms;
-            }
-            panMapToAllLocations(map, locations, 0, 0);
-        }
-
-
-        function createPathfromLocations(locs){
-            travelpath = new google.maps.Polyline({
-                path: locs,
-                geodesic: true,
-                strokeColor: '#FF0000',
-                strokeOpacity: 1.0,
-                strokeWeight: 2
-            });
-            return travelpath;
-        }
-        //All Relations of Google Maps Zooms according to the set zoom Faktor (0-20)
-        //var zoomRelations =[0, 591657550.500000,295828775.300000,147914387.600000,73957193.820000,36978596.910000,18489298.450000,9244649.227000,4622324.614000,2311162.307000,1155581.153000,577790.576700, 288895.288400,144447.644200,72223.822090,36111.911040,18055.955520,9027.977761,4513.988880,2256.994440,1128.497220];
+    div(id="msModal" class="modal fade" role="dialog")
+      .modal-dialog.modal-dialog-centered
+        .modal-content
+          .modal-header
+            h4 Define parameters of the Presentation
+          .modal-body
+            form-group
+              .row
+                label(for="checkms" class="col-lg-8") Do you want to enable Autoplay?
+                .col-lg-4
+                  input(class="form-control" type="checkbox" id="checkms")
+              div(class="row" style="margin-top:5px")
+                label(for="inputms" class="col-lg-8") How long do you want Autoplay to pause? (in Milliseconds)
+                .col-lg-4
+                  input(class="form-control" id="inputms" value="3000" disabled)
+          .modal-footer
+            .text-center
+              button(class="btn btn-default" data-dismiss="modal" onclick='setShowLenghtAndStartAnimation()') Start
+    div(id='playmodal' class='playmodal' style='display: block' onclick='clearTimeout(currentTimeOut); currentResolve();')
+      img(class='playmodal-content' id='img0' style='display: none')
+      img(class='playmodal-content' id='img1' style='display: none')
+      img(class='playmodal-content' id='img2' style='display: none')
+      img(class='playmodal-content' id='img3' style='display: none')
+      img(class='playmodal-content' id='img4' style='display: none')
+    script(type='text/javascript').
         var locations = !{JSON.stringify(album.images)};
-
-
-        var MAXSTEPS = 50;
-        var MINSTEPS = 1;
-        var STEPLENGTH= 30;
-        var WAITATTARGETTIME = 1000;
-        var PRELOAD_IMG_COUNT = 5;
-        var IMAGE_SHOW_LENGTH = 3000;
+    script(type='text/javascript' src="../js/playFrontend.js")
 
 
 
-
-        function panMapToAllLocations(map, locs, i, oldSteps){
-            var modal = document.getElementById('playmodal');
-            var modalImg = document.getElementById("img"+i%PRELOAD_IMG_COUNT);
-            console.log("currently panning to "+i);
-
-            console.log("Distance "+getDistanceFromLatLonInKm(locs[0].lat, locs[0].lng, locs[1].lat, locs[1].lng));
-
-
-            sleep(STEPLENGTH*oldSteps).then(()=>{
-                //console.log(locs[0]);
-                //console.log("lat starting: "+ locs[0].lat + "  lng starting: " + locs[0].lng);
-                sleep(WAITATTARGETTIME).then(()=>{
-                    modal.style.display = "block";
-                    modalImg.style.display = "block";
-                    // modalImg.style.imageOrientation = "from-image";  This would be the solution to Rotation issues, but only implemented in Firefox
-
-                    sleepAndSetTimeoutId(IMAGE_SHOW_LENGTH).then(()=>{
-                        modal.style.display = "none";
-                        modalImg.style.display = "none";
-                        if(locs[PRELOAD_IMG_COUNT]){
-                            modalImg.src = "https://drive.google.com/uc?export=view&id="+locs[PRELOAD_IMG_COUNT].id;
-                            modalImg.style.transform = "rotate("+locs[PRELOAD_IMG_COUNT].rotation*90+"deg)";
-
-                            console.log("modalimg src is now: "+modalImg.src)
-                        }
-
-                        var bounds = new google.maps.LatLngBounds();
-                        bounds.extend({lat: locs[0].lat, lng: locs[0].lng});
-                        bounds.extend({lat: locs[1].lat, lng: locs[1].lng});
-                        map.fitBounds(bounds);
-                        var steps = calculateStepsAccordingToDistance(getDistanceFromLatLonInKm(locs[0].lat, locs[0].lng, locs[1].lat, locs[1].lng));
-                        console.log("steps:" + steps);
-                        slowPanTo(map, locs[1].lat, locs[1].lng, steps);
-                        locs.shift();
-
-                        if(locs.length != 1){
-                           panMapToAllLocations(map, locs, i+1, steps);
-                        }
-                        else{
-                            sleep(STEPLENGTH*steps).then(() => {
-                                //Show the last image
-                                modalImg = document.getElementById("img" + (i + 1) % PRELOAD_IMG_COUNT);
-                                modal.style.display = "block";
-                                modalImg.style.display = "block";
-                            });
-                        }
-                    });
-                });
-
-            });
-        }
-
-        function preloadImages(locs){
-            for(i=0; i<PRELOAD_IMG_COUNT; i++){
-                var img = document.getElementById("img"+i);
-                if(img && locs[i]){
-                    img.src = "https://drive.google.com/uc?export=view&id="+locs[i].id;
-                    img.style.transform = "rotate(" + locs[i].rotation * 90 + "deg)";
-                }
-            }
-        }
-
-        function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
-        function sleepAndSetTimeoutId(ms) {
-            return new Promise(resolve => {
-                    currentResolve = resolve;
-                    currentTimeOut = setTimeout(resolve, ms);
-                    console.log("currentTimeout: " + currentTimeOut);
-            });
-        }
-
-        function slowPanTo(map, goalLat, goalLong, steps) {
-                //console.log("slowpanto "+steps);
-                var curLat = map.getCenter().lat();
-                var curLng = map.getCenter().lng();
-                //console.log("curlat: "+curLat+ "  curlng: " +curLng);
-                var newLat = curLat + ((goalLat - curLat) / steps);
-                var newLng = curLng + ((goalLong - curLng) / steps);
-                map.panTo({lat: newLat, lng: newLng});
-                if(steps==1){
-                    return;
-                }
-                else{
-                    sleep(STEPLENGTH).then(()=>{
-                       //console.log("stepping in: "+steps);
-                       slowPanTo(map, goalLat, goalLong, steps-1);
-                    });
-                }
-        }
-
-        function calculateStepsAccordingToDistance(dist) {
-            //calculated using a logistical growth model, with the defined
-            //Maxsteps as the maximum of growth and the minSteps as starting value
-            //and and appropriate growth constant k
-            if(dist<1){
-                return 1;
-            }
-            var S=MAXSTEPS;
-            var a=MINSTEPS;
-            var k=0.004;
-
-            return Math.ceil((a*S)/(a+((S-a)*Math.pow(Math.E,(-S*k*dist)))));
-
-        }
-
-        //Haversine Formula
-        function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-            var R = 6371; // Radius of the earth in km
-            var dLat = deg2rad(lat2 - lat1);  // deg2rad below
-            var dLon = deg2rad(lon2 - lon1);
-            var a =
-                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-                Math.sin(dLon / 2) * Math.sin(dLon / 2)
-            ;
-            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            var d = R * c; // Distance in km
-            return d;
-        }
-
-        function deg2rad(deg) {
-            return deg * (Math.PI / 180)
-        }
-
-
-
-        $(window).on('load',function(){
-            $('#msModal').modal('show');
-            document.getElementById('checkms').onchange = function () {
-                document.getElementById('inputms').disabled = !this.checked;
-            };
-        });
 
   //TODO Client API Key has to be Restricted after development is finished
   script(type='text/javascript' src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBu_4PKulFGlZtAB10E-ekucVFzm2KzSxk&callback=initMap" async defer)

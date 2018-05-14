@@ -3,29 +3,29 @@
  * Creation page.
  */
 const Album = require('../models/Album.js');
-const passportConfig = require ("../config/passport");
+const passportConfig = require("../config/passport");
 const Batchelor = require('batchelor');
 
 exports.getCreation = (req, res) => {
-  //query all locations and pass them to the rendering function
+    //query all locations and pass them to the rendering function
 
-  console.log("req.body");
-  console.log(req.body);
-  console.log({_id: req.params.id, ownerMail: req.user.email});
-  Album.findOne( {_id: req.params.id, ownerMail: req.user.email}, function (err, album) {
-    if(err){
-      console.error(err);
-        return res.status(500).send( { error: err });
-    }
-    if(!album){
-        console.error("Album not found!");
-        return res.status(404).send( { error: "Album not found!" });
-    }
+    console.log("req.body");
+    console.log(req.body);
+    console.log({_id: req.params.id, ownerMail: req.user.email});
+    Album.findOne({_id: req.params.id, ownerMail: req.user.email}, function (err, album) {
+        if (err) {
+            console.error(err);
+            return res.status(500).send({error: err});
+        }
+        if (!album) {
+            console.error("Album not found!");
+            return res.status(404).send({error: "Album not found!"});
+        }
 
-    res.render('creation/creation', {
-        album: album
+        res.render('creation/creation', {
+            album: album
+        });
     });
-  });
 
 };
 
@@ -36,10 +36,10 @@ exports.getCreation = (req, res) => {
  */
 exports.getCreations = (req, res) => {
     //query all locations and pass them to the rendering function
-    Album.find( {ownerMail: req.user.email}, function (err, albums) {
-        if(err){
+    Album.find({ownerMail: req.user.email}, function (err, albums) {
+        if (err) {
             console.error(err);
-            return res.status(500).send( { error: err });
+            return res.status(500).send({error: err});
         }
         res.render('creation/creations', {
             albums: albums
@@ -55,46 +55,45 @@ exports.getCreations = (req, res) => {
  */
 exports.saveCreation = (req, res) => {
     console.log("postCreation");
-    var updatedAlbum =req.body.album;
-    if(!updatedAlbum) return res.status(400).send( { error: "No Album included in Request Body" });
+    var updatedAlbum = req.body.album;
+    if (!updatedAlbum) return res.status(400).send({error: "No Album included in Request Body"});
 
 
     console.log(updatedAlbum);
-    Album.findOne({_id: updatedAlbum._id, ownerMail: req.user.email}, (err, doc) =>{
-        if(err){
+    Album.findOne({_id: updatedAlbum._id, ownerMail: req.user.email}, (err, doc) => {
+        if (err) {
             console.error(err);
-            return res.status(500).send( { error: err });
+            return res.status(500).send({error: err});
         }
-        if(!doc){
+        if (!doc) {
             console.error("Album not found!");
-            return res.status(404).send( { error: "Album not found!" });
+            return res.status(404).send({error: "Album not found!"});
         }
 
         updatedAlbum.images.forEach(image => {
-            doc.images.forEach(oldImage =>{
-                if(image.id == oldImage.id){
+            doc.images.forEach(oldImage => {
+                if (image.id == oldImage.id) {
                     image.thumbnail = oldImage.thumbnail;
                 }
             });
         });
 
-        Album.findOneAndUpdate({_id: updatedAlbum._id, ownerMail: req.user.email}, updatedAlbum, (err, doc) =>{
-            if(err){
+        Album.findOneAndUpdate({_id: updatedAlbum._id, ownerMail: req.user.email}, updatedAlbum, (err, doc) => {
+            if (err) {
                 console.error(err);
-                return res.status(500).send( { error: err });
+                return res.status(500).send({error: err});
             }
-            if(!doc){
+            if (!doc) {
                 console.error("Album not found!");
-                return res.status(404).send( { error: "Album not found!" });
+                return res.status(404).send({error: "Album not found!"});
             }
 
 
-        return res.send("succesfully saved");
+            return res.send("succesfully saved");
         });
     });
 
 };
-
 
 
 /**
@@ -103,11 +102,11 @@ exports.saveCreation = (req, res) => {
  */
 exports.updateLocations = (req, res) => {
     console.log("updateLocations");
-    if(!req.body.album) return res.status(400).send( { error: "No Album included in Request Body" });
+    if (!req.body.album) return res.status(400).send({error: "No Album included in Request Body"});
 
     var batch = new Batchelor({
-        'uri':'https://www.googleapis.com/batch',
-        'method':'POST',
+        'uri': 'https://www.googleapis.com/batch',
+        'method': 'POST',
         'auth': {
             'bearer': [req.user.accessToken]
         },
@@ -117,14 +116,13 @@ exports.updateLocations = (req, res) => {
     });
 
 
-
     req.body.album.images.forEach((image) => {
         batch.add({
             'method': 'PATCH',
-            'path': '/drive/v3/files/'+image.id,
-            'parameters':{
-                'Content-Type':'application/json;',
-                'body':{
+            'path': '/drive/v3/files/' + image.id,
+            'parameters': {
+                'Content-Type': 'application/json;',
+                'body': {
                     "imageMediaMetadata": {
                         "location": {
                             "latitude": image.lat,
@@ -137,21 +135,21 @@ exports.updateLocations = (req, res) => {
     });
 
 
-    batch.run(function(err, response){
+    batch.run(function (err, response) {
         console.log(response);
-        if (err){
+        if (err) {
             console.log("Error: " + err);
         }
 
-        response.parts.forEach( (part, index) => {
+        response.parts.forEach((part, index) => {
 
-                var metadata = part.body;
-                //console.log("metadata:");
-                //console.log(metadata);
-                //metadata = JSON.parse(metadata);
-                if (part.statusCode != '200') {
-                    console.error("ERROR CODE IN RESPONSE: \n");
-                }
+            var metadata = part.body;
+            //console.log("metadata:");
+            //console.log(metadata);
+            //metadata = JSON.parse(metadata);
+            if (part.statusCode != '200') {
+                console.error("ERROR CODE IN RESPONSE: \n");
+            }
 
         });
     });
@@ -165,20 +163,20 @@ exports.updateLocations = (req, res) => {
  */
 exports.deleteCreation = (req, res) => {
     console.log("deleteCreation");
-    if(!req.params.id) return res.status(400).send({ error: "No Id included in Request Params" });
+    if (!req.params.id) return res.status(400).send({error: "No Id included in Request Params"});
 
-    Album.remove({_id: req.params.id, ownerMail: req.user.email}, (err1)=>{
-        Album.find( {ownerMail: req.user.email}, function (err2, albums) {
-            if(err1 || err2){
+    Album.remove({_id: req.params.id, ownerMail: req.user.email}, (err1) => {
+        Album.find({ownerMail: req.user.email}, function (err2, albums) {
+            if (err1 || err2) {
                 console.error(err1 + err2);
                 res.render('creation/creations', {
                     albums: albums,
-                    error: "Could not remove Presentation "+req.params.id+"!"
+                    error: "Could not remove Presentation " + req.params.id + "!"
                 });
             }
             res.render('creation/creations', {
                 albums: albums,
-                success: "Presentation "+req.params.id+" removed successfully."
+                success: "Presentation " + req.params.id + " removed successfully."
             });
         });
     });
@@ -192,15 +190,15 @@ exports.deleteCreation = (req, res) => {
  */
 exports.shareCreation = (req, res) => {
     console.log("shareCreation");
-    if(!req.params.id) return res.status(400).send({ error: "No Id included in Request Params" });
+    if (!req.params.id) return res.status(400).send({error: "No Id included in Request Params"});
 
-    Album.findOne({_id: req.params.id, ownerMail: req.user.email}, (err1, doc)=>{
-        Album.find( {ownerMail: req.user.email}, function (err2, albums) {
-            if(err1 || err2){
+    Album.findOne({_id: req.params.id, ownerMail: req.user.email}, (err1, doc) => {
+        Album.find({ownerMail: req.user.email}, function (err2, albums) {
+            if (err1 || err2) {
                 console.error(err1 + err2);
                 res.render('creation/creations', {
                     albums: albums,
-                    error: "Could not share Presentation "+req.params.id+" successfully!"
+                    error: "Could not share Presentation " + req.params.id + " successfully!"
                 });
             }
 
@@ -210,8 +208,8 @@ exports.shareCreation = (req, res) => {
 
 
                 var batch = new Batchelor({
-                    'uri':'https://www.googleapis.com/batch',
-                    'method':'POST',
+                    'uri': 'https://www.googleapis.com/batch',
+                    'method': 'POST',
                     'auth': {
                         'bearer': [accessToken]
                     },
@@ -221,49 +219,50 @@ exports.shareCreation = (req, res) => {
                 });
 
 
-
                 doc.images.forEach((image) => {
                     batch.add({
                         'method': 'POST',
-                        'path': '/drive/v3/files/'+image.id+'/permissions',
-                        'parameters':{
-                            'Content-Type':'application/json;',
-                            'body':{
+                        'path': '/drive/v3/files/' + image.id + '/permissions',
+                        'parameters': {
+                            'Content-Type': 'application/json;',
+                            'body': {
                                 'role': 'reader',
                                 'type': 'anyone',
                                 'allowFileDiscovery': false
-                                }
                             }
-                        });
+                        }
+                    });
                 });
 
-                batch.run(function(err, response){
+                batch.run(function (err, response) {
                     console.log(response);
-                    if (err){
+                    if (err) {
                         console.error("Error: " + err);
                         res.render('creation/creations', {
                             albums: albums,
-                            error: "Could not share Presentation "+req.params.id+" successfully!"
+                            error: "Could not share Presentation " + req.params.id + " successfully!"
                         });
                     }
 
-                    var noErrors = response.parts.every( (part, index) => {
+                    var noErrors = response.parts.every((part, index) => {
                         if (part.statusCode != '200') {
                             console.error("ERROR CODE IN RESPONSE: \n" + part);
                             res.render('creation/creations', {
                                 albums: albums,
-                                error: "Could not share Presentation "+req.params.id+" successfully! Maybe you do not posess the necessary rights for the files on Google Drive?"
+                                error: "Could not share Presentation " + req.params.id + " successfully! Maybe you do not posess the necessary rights for the files on Google Drive?"
                             });
                             return false;
                         }
                         return true;
                     });
-                    if(noErrors) {
+                    if (noErrors) {
                         Album.findOneAndUpdate({
                             _id: req.params.id,
                             ownerMail: req.user.email
                         }, {shared: true}, (err1, doc) => {
-                            albums.find(album => {return album._id == req.params.id}).shared = true;
+                            albums.find(album => {
+                                return album._id == req.params.id
+                            }).shared = true;
                             res.render('creation/creations', {
                                 albums: albums, //Veraltete version von albums
                                 success: "Presentation " + req.params.id + " shared successfully.\nThe sharelink was copied to your Clipboard."
@@ -277,17 +276,16 @@ exports.shareCreation = (req, res) => {
 };
 
 
-
 /**
  * POST /
  * Unshare a Creation
  */
 exports.unshareCreation = (req, res) => {
     console.log("unshareCreation");
-    if(!req.params.id) return res.status(400).send({ error: "No Id included in Request Params" });
+    if (!req.params.id) return res.status(400).send({error: "No Id included in Request Params"});
 
-    Album.findOne({_id: req.params.id, ownerMail: req.user.email}, (err1, doc)=>{
-        Album.find( {ownerMail: req.user.email}, function (err2, albums) {
+    Album.findOne({_id: req.params.id, ownerMail: req.user.email}, (err1, doc) => {
+        Album.find({ownerMail: req.user.email}, function (err2, albums) {
             passportConfig.refreshAccessToken(req.user._id, accessToken => {
                 if (err1 || err2) {
                     console.error(err1 + err2);
@@ -350,7 +348,9 @@ exports.unshareCreation = (req, res) => {
                             _id: req.params.id,
                             ownerMail: req.user.email
                         }, {shared: false}, (err, doc) => {
-                            albums.find(album => {return album._id == req.params.id}).shared = false;
+                            albums.find(album => {
+                                return album._id == req.params.id
+                            }).shared = false;
                             res.render('creation/creations', {
                                 albums: albums,
                                 success: "Presentation " + req.params.id + " unshared successfully."
