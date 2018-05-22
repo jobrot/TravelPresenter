@@ -6,19 +6,6 @@ const User = require('../models/User');
 const Album = require('../models/Album');
 
 /**
- * GET /login
- * Login page.
- */
-exports.getLogin = (req, res) => {
-    if (req.user) {
-        return res.redirect('/');
-    }
-    res.render('account/login', {
-        title: 'Login'
-    });
-};
-
-/**
  * GET /logout
  * Log out.
  */

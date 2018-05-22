@@ -118,7 +118,6 @@ app.use(express.static(path.join(__dirname, 'public'), { maxAge: 31557600000 }))
  * Primary app routes.
  */
 app.get('/', homeController.index);
-app.get('/login', userController.getLogin);
 app.get('/logout', userController.logout);
 app.get('/account', passportConfig.isAuthenticated, userController.getAccount);
 app.post('/account/profile', passportConfig.isAuthenticated, userController.postUpdateProfile);
@@ -146,7 +145,7 @@ app.get('/play/:id',  playController.getPlay);
 /**
  * OAuth authentication routes. (Sign in)
  */
-app.get('/auth/google', passport.authenticate('google', { accessType: 'offline', scope: 'profile email https://www.googleapis.com/auth/drive' })); //DO NOT CHANGE THIS // https://www.googleapis.com/auth/drive.metadata  https://www.googleapis.com/auth/drive.photos.readonly
+app.get('/login', passport.authenticate('google', { accessType: 'offline', scope: 'profile email https://www.googleapis.com/auth/drive' })); //DO NOT CHANGE THIS // https://www.googleapis.com/auth/drive.metadata  https://www.googleapis.com/auth/drive.photos.readonly
 app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login'}), (req, res) => {
   res.redirect(req.session.returnTo || '/');
 });
