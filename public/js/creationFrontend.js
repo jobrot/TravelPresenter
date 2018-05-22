@@ -1,6 +1,5 @@
 var markers = [];
 var travelpath;
-var markerCluster;
 var map;
 function initMap() {
 
@@ -193,11 +192,9 @@ function persistCreation(album) {
 function updatePlayableUIElements(playable) {
     album.playable = playable;
     if (playable) {
-        console.log("disabled = false");
         $(".playablebutton").prop('disabled', false);
     }
     else {
-        console.log("disabled = true");
         $(".playablebutton").prop('disabled', true);
     }
 }

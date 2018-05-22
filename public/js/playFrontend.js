@@ -10,7 +10,6 @@ var map;
 
 //creates the map using the google maps API
 function initMap() {
-    console.log("initmap");
     map = new google.maps.Map(document.getElementById('map'), {
         zoom: 8,
         center: locations[0],

@@ -94,7 +94,7 @@ exports.refreshAccessToken = (id, callback) =>{
     User.findById(id, (err, user) => {
         if (err) { return done(err); }
         refresh.requestNewAccessToken('google', user.refreshToken, function(err, accessToken) {
-            if (err) {console.log(err);}
+            if (err) {console.error(err);}
             user.accessToken=accessToken;
             //user.refreshToken=refreshToken;
             user.save((err) => {
