@@ -96,9 +96,8 @@ exports.refreshAccessToken = (id, callback) =>{
         refresh.requestNewAccessToken('google', user.refreshToken, function(err, accessToken) {
             if (err) {console.error(err);}
             user.accessToken=accessToken;
-            //user.refreshToken=refreshToken;
             user.save((err) => {
-                console.error(err);
+                if(err) { console.error(err);}
             });
             return callback(accessToken);
         });

@@ -80,16 +80,18 @@ function downloadMetadataAndCreateAlbum(accessToken, pickerresults, ownerMail, r
                     image.id = metadata.id;
                     image.position = index;
                     image.filename = metadata.name;
+
+                    if (metadata.imageMediaMetadata && metadata.imageMediaMetadata.time) {
+                        //Converting from Google Format (2017:09:29 11:04:42) to ISO Date 2017-09-29T11:04:42Z
+                        image.createdTime = new Date(metadata.imageMediaMetadata.time.replace(":", "-").replace(":", "-").replace(" ", "T") + "Z");
+                    }
                     if (!metadata.imageMediaMetadata || !metadata.imageMediaMetadata.location) {
-                        warnings.push(metadata.name);
+                        warnings.push(" " + metadata.name);
                     }
                     else {
                         image.lat = metadata.imageMediaMetadata.location.latitude;
                         image.lng = metadata.imageMediaMetadata.location.longitude;
                         image.rotation = metadata.imageMediaMetadata.rotation;
-
-                        //Converting from Google Format (2017:09:29 11:04:42) to ISO Date 2017-09-29T11:04:42Z
-                        image.createdTime = new Date(metadata.imageMediaMetadata.time.replace(":", "-").replace(":", "-").replace(" ", "T") + "Z");
                     }
 
                     if (metadata.thumbnailLink) {
@@ -124,9 +126,6 @@ function downloadMetadataAndCreateAlbum(accessToken, pickerresults, ownerMail, r
             });
             album.ownerMail = ownerMail;
             album.save();
-            if (errors.length == 0) {
-                errors = null;
-            }
             res.render('creation/creation', {
                 album: album,
                 warning: "The following Images you provided have no geographic location: " + warnings + " They have been marked in yellow. Pin them manually to add them to the presentation.\n\n" + errors

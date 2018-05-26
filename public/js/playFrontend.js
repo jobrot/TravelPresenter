@@ -1,5 +1,5 @@
 var MAXSTEPS = 50;
-var MINSTEPS = 1;
+var MINSTEPS = 7;
 var STEPLENGTH = 30;
 var WAITATTARGETTIME = 1000;
 var PRELOAD_IMG_COUNT = 5;
@@ -13,9 +13,8 @@ function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
         zoom: 8,
         center: locations[0],
-        maxZoom: 12
+        maxZoom: 14
     });
-
     // Create an array of alphabetical characters used to label the markers.
     var labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     locations.map(function (location, i) {
@@ -32,7 +31,8 @@ function initMap() {
 //Entry point for the Animation, reads the values the user has given and
 //sets according variables
 function setShowLenghtAndStartAnimation() {
-    var ms = document.getElementById("inputms").value;
+    var seconds = document.getElementById("inputms").value;
+    var ms = seconds * 1000;
     if (!$('#checkms:checked').val()) {
         IMAGE_SHOW_LENGTH = 99999999999;
     }
@@ -84,7 +84,7 @@ function panMapToAllLocations(map, locs, i, oldSteps) {
             // the edges of the map are accomodated to fit the current and the next location
             map.fitBounds(bounds);
             var steps = calculateStepsAccordingToDistance(getDistanceFromLatLonInKm(locs[0].lat, locs[0].lng, locs[1].lat, locs[1].lng));
-
+            console.log("steps "+steps);
             slowPanTo(map, locs[1].lat, locs[1].lng, steps);
 
             //locs is used as a queue, the next imag is always at [0]
@@ -153,7 +153,7 @@ function slowPanTo(map, goalLat, goalLong, steps) {
 //and and appropriate growth constant k
 function calculateStepsAccordingToDistance(dist) {
     if (dist < 1) {
-        return 1;
+        return MINSTEPS;
     }
     var S = MAXSTEPS;
     var a = MINSTEPS;
