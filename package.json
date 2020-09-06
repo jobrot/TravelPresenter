@@ -23,7 +23,7 @@
     "gapi": "0.0.3",
     "google-auth-library": "^0.12.0",
     "google-picker": "^0.1.1",
-    "googleapis": "^23.0.0",
+    "googleapis": "^39.1.0",
     "lob": "^4.1.1",
     "lusca": "^1.5.1",
     "mongoose": "^4.11.7",
