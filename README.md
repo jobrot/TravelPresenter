@@ -2,7 +2,7 @@
 The Goal of this project is to create an easy to use web based application, that enables users to create and
 share custom presentations of their travels, utilizing geotags of images and a rendered representation on
 a map for the travelled route.
-####Prerequisites 
+#### Prerequisites 
 * some form of mongoDB
 * [node.js](https://nodejs.org/en/)
 * the [npm package manager ](https://www.npmjs.com/)
